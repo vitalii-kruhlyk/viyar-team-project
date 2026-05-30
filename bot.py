@@ -1,5 +1,6 @@
 import functools
 import json
+from collections.abc import Callable
 from pathlib import Path
 from models import AddressBook, Record
 
@@ -22,6 +23,9 @@ def input_error(func):
 
 
 class Bot:
+	book: AddressBook
+	commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
+
 	def __init__(self) -> None:
 		self.book = self._load_contacts()
 		self.commands = {
