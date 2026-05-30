@@ -7,34 +7,6 @@ from models import AddressBook, Record
 DATA_FILE = Path(__file__).resolve().parent / "contacts.json"
 
 
-def load_contacts() -> AddressBook:
-	if not DATA_FILE.exists():
-		return AddressBook()
-
-	try:
-		with open(DATA_FILE, "r", encoding="utf-8") as file:
-			book = AddressBook()
-			for item in json.load(file):
-				record = Record.from_dict(item)
-				book.add_record(record)
-			return book
-	except json.JSONDecodeError:
-		return AddressBook()
-
-
-def save_contacts(data: AddressBook) -> None:
-	temp_file = DATA_FILE.with_suffix(".tmp")
-
-
-	with open(temp_file, "w", encoding="utf-8") as file:
-		json.dump([record.to_dict() for record in data.values()], file, indent=4)
-
-	temp_file.replace(DATA_FILE)
-
-
-book = load_contacts()
-
-
 def input_error(func):
 	@functools.wraps(func)
 	def wrapper(*args, **kwargs):
@@ -49,245 +21,254 @@ def input_error(func):
 	return wrapper
 
 
-def parse_command(user_input: str) -> tuple[str | None, list[str]]:
-	cleaned_input = user_input.strip()
-	lowered_input = cleaned_input.lower()
+class Bot:
+	def __init__(self) -> None:
+		self.book = self._load_contacts()
+		self.commands = {
+			"hello": self.hello,
+			"add": self.add,
+			"add_birthday": self.add_birthday,
+			"birthday": self.birthday,
+			"change": self.change,
+			"phone": self.phone,
+			"show": self.show_all,
+			"show_page": self.show_page,
+			"delete": self.delete_contact,
+			"remove_phone": self.remove_phone,
+			"find_phone": self.find_phone,
+			"search": self.search,
+			"good bye": self.exit_bot,
+			"close": self.exit_bot,
+			"stop": self.exit_bot,
+			"exit": self.exit_bot,
+		}
+
+	def _load_contacts(self) -> AddressBook:
+		if not DATA_FILE.exists():
+			return AddressBook()
+
+		try:
+			with open(DATA_FILE, "r", encoding="utf-8") as file:
+				book = AddressBook()
+				for item in json.load(file):
+					record = Record.from_dict(item)
+					book.add_record(record)
+				return book
+		except json.JSONDecodeError:
+			return AddressBook()
+
+	def _save_contacts(self) -> None:
+		temp_file = DATA_FILE.with_suffix(".tmp")
+
+		with open(temp_file, "w", encoding="utf-8") as file:
+			json.dump([record.to_dict() for record in self.book.values()], file, indent=4)
+
+		temp_file.replace(DATA_FILE)
+
+	def parse_command(self, user_input: str) -> tuple[str | None, list[str]]:
+		cleaned_input = user_input.strip()
+		lowered_input = cleaned_input.lower()
+
+		for command in sorted(self.commands, key=len, reverse=True):
+			if lowered_input == command or lowered_input.startswith(command + " "):
+				return command, cleaned_input[len(command):].split()
+
+		return None, []
+
+	@input_error
+	def hello(self, _args: list[str]) -> tuple[str, bool]:
+		return "How can I help you?", False
+
+	@input_error
+	def add(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 2:
+			raise ValueError("Usage: add <name> <phone>")
+
+		name, phone_number = args
+
+		record = self.book.find(name)
+		if record is None:
+			record = Record(name)
+			record.add_phone(phone_number)
+			self.book.add_record(record)
+		else:
+			record.add_phone(phone_number)
+
+		self._save_contacts()
+		return f"Contact {name} added.", False
+
+	@input_error
+	def add_birthday(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 2:
+			raise ValueError("Usage: add_birthday <name> <DD.MM.YYYY>")
+
+		name, birthday = args
+
+		record = self.book.find(name)
+		if record is None:
+			raise KeyError
+
+		record.add_birthday(birthday)
+		self._save_contacts()
+		return f"Birthday for {name} added.", False
+
+	@input_error
+	def birthday(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 1:
+			raise ValueError("Usage: birthday <name>")
+
+		name = args[0]
+
+		record = self.book.find(name)
+		if record is None:
+			raise KeyError
 
-	for command in sorted(COMMANDS_LIST, key=len, reverse=True):
-		if lowered_input == command or lowered_input.startswith(command + " "):
-			return command, cleaned_input[len(command):].split()
+		days = record.days_to_birthday()
+		if days is None:
+			text_return = f"Birthday for contact {name} is not set."
+		elif days == 0:
+			text_return = f"Today is {name}'s birthday!"
+		else:
+			text_return = f"{days} day(s) left until {name}'s birthday"
 
-	return None, []
+		return text_return, False
 
+	@input_error
+	def change(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 3:
+			raise ValueError("Usage: change <name> <old_phone> <new_phone>")
 
-@input_error
-def hello(_args: list[str]) -> tuple[str, bool]:
-	return "How can I help you?", False
+		name, old_number, new_number = args
 
+		record = self.book.find(name)
+		if record is None:
+			raise KeyError
 
-@input_error
-def add(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 2:
-		raise ValueError("Usage: add <name> <phone>")
+		record.edit_phone(old_number, new_number)
+		self._save_contacts()
+		return f"Contact {name} changed.", False
 
-	name, phone_number = args
+	@input_error
+	def phone(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 1:
+			raise ValueError("Usage: phone <name>")
 
-	record = book.find(name)
-	if record is None:
-		record = Record(name)
-		record.add_phone(phone_number)
-		book.add_record(record)
-	else:
-		record.add_phone(phone_number)
+		name = args[0]
 
-	save_contacts(book)
-	return f"Contact {name} added.", False
+		record = self.book.find(name)
+		if record is None:
+			raise KeyError
 
+		return str(record), False
 
-@input_error
-def add_birthday(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 2:
-		raise ValueError("Usage: add_birthday <name> <DD.MM.YYYY>")
+	@input_error
+	def show_all(self, _args: list[str]) -> tuple[str, bool]:
+		if not self.book.data:
+			return "No contacts saved.", False
 
-	name, birthday = args
+		return "\n".join(str(record) for record in self.book.data.values()), False
 
-	record = book.find(name)
-	if record is None:
-		raise KeyError
+	@input_error
+	def show_page(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 1:
+			raise ValueError("Usage: show_page <page_size>")
 
-	record.add_birthday(birthday)
-	save_contacts(book)
-	return f"Birthday for {name} added.", False
+		page_size = int(args[0])
 
+		if not self.book.data:
+			return "No contacts saved.", False
 
-@input_error
-def birthday(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 1:
-		raise ValueError("Usage: birthday <name>")
+		pages = []
+		for index, chunk in enumerate(self.book.iterator(page_size), start=1):
+			page_text = "\n".join(str(record) for record in chunk)
+			pages.append(f"Page {index}:\n{page_text}")
 
-	name = args[0]
+		return "\n\n".join(pages), False
 
-	record = book.find(name)
-	if record is None:
-		raise KeyError
+	@input_error
+	def delete_contact(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 1:
+			raise ValueError("Usage: delete <name>")
 
-	days = record.days_to_birthday()
-	if days is None:
-		text_return = f"Birthday for contact {name} is not set."
-	elif days == 0:
-		text_return = f"Today is {name}'s birthday!"
-	else:
-		text_return = f"{days} day(s) left until {name}'s birthday"
+		name = args[0]
 
-	return text_return, False
+		if self.book.find(name) is None:
+			raise KeyError
 
+		self.book.delete(name)
+		self._save_contacts()
+		return f"Contact {name} deleted.", False
 
-@input_error
-def change(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 3:
-		raise ValueError("Usage: change <name> <old_phone> <new_phone>")
+	@input_error
+	def remove_phone(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 2:
+			raise ValueError("Usage: remove_phone <name> <phone>")
 
-	name, old_number, new_number = args
+		name, phone_number = args
 
-	record = book.find(name)
-	if record is None:
-		raise KeyError
+		record = self.book.find(name)
+		if record is None:
+			raise KeyError
 
-	record.edit_phone(old_number, new_number)
-	save_contacts(book)
-	return f"Contact {name} changed.", False
+		record.remove_phone(phone_number)
+		self._save_contacts()
+		return f"Phone number {phone_number} removed from contact {name}.", False
 
+	@input_error
+	def find_phone(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 2:
+			raise ValueError("Usage: find_phone <name> <phone>")
 
-@input_error
-def phone(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 1:
-		raise ValueError("Usage: phone <name>")
+		name, phone_number = args
 
-	name = args[0]
+		record = self.book.find(name)
+		if record is None:
+			raise KeyError
 
-	record = book.find(name)
-	if record is None:
-		raise KeyError
+		found_phone = record.find_phone(phone_number)
+		if found_phone is None:
+			return f"Phone number {phone_number} not found in contact {name}.", False
 
-	return str(record), False
+		return f"{name}: {found_phone}", False
 
+	@input_error
+	def search(self, args: list[str]) -> tuple[str, bool]:
+		if len(args) != 1:
+			raise ValueError("Usage: search <query>")
 
-@input_error
-def show_all(_args: list[str]) -> tuple[str, bool]:
-	if not book.data:
-		return "No contacts saved.", False
+		query = args[0]
+		results = self.book.search(query)
 
-	return "\n".join(str(record) for record in book.data.values()), False
+		if not results:
+			return f"No contacts found for query: {query}", False
 
+		return "\n".join(str(record) for record in results), False
 
-@input_error
-def show_page(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 1:
-		raise ValueError("Usage: show_page <page_size>")
+	def exit_bot(self, _args: list[str]) -> tuple[str, bool]:
+		return "Good bye!", True
 
-	page_size = int(args[0])
+	def run(self) -> None:
+		print("Bot started. Type 'hello' to begin.")
 
-	if not book.data:
-		return "No contacts saved.", False
+		while True:
+			user_input = input("Enter a command: ")
 
-	pages = []
-	for index, chunk in enumerate(book.iterator(page_size), start=1):
-		page_text = "\n".join(str(record) for record in chunk)
-		pages.append(f"Page {index}:\n{page_text}")
+			if not user_input.strip():
+				continue
 
-	return "\n\n".join(pages), False
+			command, args = self.parse_command(user_input)
 
+			if command is None:
+				print(f"Unknown command. Available commands: {', '.join(self.commands.keys())}")
+				continue
 
-@input_error
-def delete_contact(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 1:
-		raise ValueError("Usage: delete <name>")
+			command_handler = self.commands[command]
+			message, should_exit = command_handler(args)
 
-	name = args[0]
+			print(message)
 
-	if book.find(name) is None:
-		raise KeyError
+			if should_exit:
+				break
 
-	book.delete(name)
-	save_contacts(book)
-	return f"Contact {name} deleted.", False
 
 
-@input_error
-def remove_phone(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 2:
-		raise ValueError("Usage: remove_phone <name> <phone>")
-
-	name, phone_number = args
-
-	record = book.find(name)
-	if record is None:
-		raise KeyError
-
-	record.remove_phone(phone_number)
-	save_contacts(book)
-	return f"Phone number {phone_number} removed from contact {name}.", False
-
-
-@input_error
-def find_phone(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 2:
-		raise ValueError("Usage: find_phone <name> <phone>")
-
-	name, phone_number = args
-
-	record = book.find(name)
-	if record is None:
-		raise KeyError
-
-	found_phone = record.find_phone(phone_number)
-	if found_phone is None:
-		return f"Phone number {phone_number} not found in contact {name}.", False
-
-	return f"{name}: {found_phone}", False
-
-
-@input_error
-def search(args: list[str]) -> tuple[str, bool]:
-	if len(args) != 1:
-		raise ValueError("Usage: search <query>")
-
-	query = args[0]
-	results = book.search(query)
-
-	if not results:
-		return f"No contacts found for query: {query}", False
-
-	return "\n".join(f"{str(record)}" for record in results), False
-
-
-def exit_bot(_args: list[str]) -> tuple[str, bool]:
-	return "Good bye!", True
-
-
-COMMANDS_LIST = {
-	"hello": hello,
-	"add": add,
-	"add_birthday": add_birthday,
-	"birthday": birthday,
-	"change": change,
-	"phone": phone,
-	"show": show_all,
-	"show_page": show_page,
-	"delete": delete_contact,
-	"remove_phone": remove_phone,
-	"find_phone": find_phone,
-	"search": search,
-	"good bye": exit_bot,
-	"close": exit_bot,
-	"stop": exit_bot,
-	"exit": exit_bot,
-}
-
-
-def main() -> None:
-	print("Bot started. Type 'hello' to begin.")
-
-	while True:
-		user_input = input("Enter a command: ")
-
-		if not user_input.strip():
-			continue
-
-		command, args = parse_command(user_input)
-
-		if command is None:
-			print(f"Unknown command. Available commands: {', '.join(COMMANDS_LIST.keys())}")
-			continue
-
-		command_handler = COMMANDS_LIST[command]
-		message, should_exit = command_handler(args)
-
-		print(message)
-
-		if should_exit:
-			break
-
-
-if __name__ == "__main__":
-	main()
