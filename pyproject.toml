@@ -1,0 +1,21 @@
+[project]
+name = "viyar-team-project"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.0",
+    "ruff>=0.15.15",
+]
+
+[tool.ruff]
+# The standard line length (same as Black)
+line-length = 88
+
+[tool.ruff.lint]
+# E: pycodestyle (standard errors)
+# F: Pyflakes (syntax errors, undefined variables)
+# I: isort (automatically alphabetizes and groups your imports)
+select = ["E", "F", "I"]
