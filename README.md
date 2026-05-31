@@ -26,6 +26,7 @@ uv sync
 # 3. Встановлення pre-commit hooks
 # Це гарантує, що Ruff автоматично форматує ваш код перед кожним комітом.
 uv run pre-commit install
+```
 
 ---
 
