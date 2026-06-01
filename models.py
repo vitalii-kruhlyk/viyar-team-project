@@ -137,8 +137,8 @@ class Record:
     name: Name
     phones: list[Phone]
     emails: list[Email]
-    birthday: "Birthday | None"
-    address: "Address | None"
+    birthday: Birthday | None
+    address: Address | None
 
     def __init__(self, name: str, birthday: str | None = None) -> None:
         self.name = Name(name)
@@ -252,7 +252,8 @@ class Record:
             raise ValueError(f"No address set for contact {self.name.value}")
         self.address = None
 
-    def _birthday_for_year(self, birthday: date, year: int) -> date:
+    @staticmethod
+    def _birthday_for_year(birthday: date, year: int) -> date:
         try:
             return birthday.replace(year=year)
         except ValueError:
