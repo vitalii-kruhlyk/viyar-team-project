@@ -1,6 +1,4 @@
-from bot import Bot
-
+from interfaces import CliBot
 
 if __name__ == "__main__":
-	Bot().run()
-
+    CliBot().run()
