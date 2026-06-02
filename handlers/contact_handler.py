@@ -102,7 +102,7 @@ class ContactHandler:
     @input_error
     def birthday(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 1:
-            raise ValueError("Usage: birthday <name>")
+            raise ValueError("Usage: birthday <number of days>")
 
         name = args[0]
 
