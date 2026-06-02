@@ -87,8 +87,12 @@ class Record:
         return ", ".join(parts)
 
     def find_phone(self, phone: str) -> Phone | None:
+        try:
+            normalized = Phone.validate_phone(phone)
+        except ValueError:
+            normalized = phone
         for phone_obj in self.phones:
-            if phone_obj.value == phone:
+            if phone_obj.value == normalized:
                 return phone_obj
         return None
 
@@ -121,8 +125,12 @@ class Record:
         old_phone_obj.value = new_phone
 
     def find_email(self, email: str) -> Email | None:
+        try:
+            normalized = Email.validate_email(email)
+        except ValueError:
+            normalized = email
         for email_obj in self.emails:
-            if email_obj.value == email:
+            if email_obj.value == normalized:
                 return email_obj
         return None
 
@@ -259,18 +267,14 @@ class AddressBook(UserDict[str, Record]):
 
     def search(self, query: str) -> list[Record]:
         results = []
-        if query.isdigit():
-            for record in self.data.values():
-                if any(query in phone.value for phone in record.phones):
-                    results.append(record)
-        else:
-            query_lower = query.lower()
-            for record in self.data.values():
-                if query_lower in record.name.value.lower():
-                    results.append(record)
-                elif any(query_lower in email.value.lower() for email in record.emails):
-                    results.append(record)
-
+        query_lower = query.lower()
+        for record in self.data.values():
+            if (
+                query_lower in record.name.value.lower()
+                or any(query_lower in phone.value for phone in record.phones)
+                or any(query_lower in email.value.lower() for email in record.emails)
+            ):
+                results.append(record)
         return results
 
     def search_by_address(

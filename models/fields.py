@@ -59,7 +59,7 @@ class Email(Field):
             raise ValueError("Email must be a string")
         try:
             email_info = _validate_email(value, check_deliverability=False)
-            return email_info.normalized
+            return email_info.normalized.lower()
         except EmailNotValidError as e:
             raise ValueError(f"Email is not valid: {e}")
 
