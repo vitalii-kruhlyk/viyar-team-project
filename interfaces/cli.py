@@ -4,7 +4,7 @@ from handlers import ContactHandler
 from storage import JsonStorage
 
 
-class Bot:
+class CliBot:
     contacts: ContactHandler
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
 

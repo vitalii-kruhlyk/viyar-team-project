@@ -1,23 +1,8 @@
-import functools
 from collections.abc import Callable
 
+from handlers.decorators import input_error
 from models import AddressBook, Record
 from storage import JsonStorage
-
-
-def input_error(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except KeyError:
-            return "Contact not found", False
-        except ValueError as error:
-            return str(error), False
-        except IndexError:
-            return "Enter user name", False
-
-    return wrapper
 
 
 class ContactHandler:

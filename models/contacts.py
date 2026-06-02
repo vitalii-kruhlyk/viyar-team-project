@@ -1,80 +1,7 @@
 from collections import UserDict
-from datetime import date, datetime
-from re import fullmatch
 from typing import Any, Iterator
 
-
-class Field:
-    value: str
-
-    def __init__(self, value: str) -> None:
-        self.value = value
-
-    def __str__(self) -> str:
-        return str(self.value)
-
-    @property
-    def value(self) -> str:
-        return self._value
-
-    @value.setter
-    def value(self, new_value: str) -> None:
-        self._value = new_value
-
-
-class Name(Field):
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        if not isinstance(new_value, str) or not new_value.strip():
-            raise ValueError("Name can't be empty")
-        self._value = new_value.strip()
-
-
-class Phone(Field):
-    @staticmethod
-    def validate_phone(value: str) -> None:
-        if not isinstance(value, str) or not value.isdigit() or len(value) != 10:
-            raise ValueError("Phone number must contain exactly 10 digits")
-
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        self.validate_phone(new_value)
-        self._value = new_value
-
-
-class Email(Field):
-    @staticmethod
-    def validate_email(value: str) -> None:
-        pattern = r"[^@\s]+@[^@\s]+\.[^@\s]+"
-        if not isinstance(value, str) or not fullmatch(pattern, value):
-            raise ValueError("Email must be a valid address, e.g. user@example.com")
-
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        self.validate_email(new_value)
-        self._value = new_value
-
-
-class Birthday(Field):
-    def __str__(self) -> str:
-        return self.value.strftime("%d.%m.%Y")
-
-    @staticmethod
-    def validate_birthday(value: str) -> date:
-        if not isinstance(value, str):
-            raise ValueError("Birthday must be in format DD.MM.YYYY")
-
-        try:
-            try:
-                return date.fromisoformat(value)
-            except ValueError:
-                return datetime.strptime(value, "%d.%m.%Y").date()
-        except ValueError:
-            raise ValueError("Birthday must be in format DD.MM.YYYY")
-
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        self._value = self.validate_birthday(new_value)
+from models.fields import Birthday, Email, Name, Phone
 
 
 class Address:
@@ -170,7 +97,6 @@ class Record:
             raise ValueError(
                 f"Phone number {phone} already exists for contact {self.name.value}"
             )
-
         self.phones.append(Phone(phone))
 
     def remove_phone(self, phone: str) -> None:
@@ -179,7 +105,6 @@ class Record:
             raise ValueError(
                 f"Phone number {phone} not found for contact {self.name.value}"
             )
-
         self.phones.remove(phone_obj)
 
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
@@ -188,14 +113,18 @@ class Record:
             raise ValueError(
                 f"Phone number {old_phone} not found for contact {self.name.value}"
             )
-
         new_phone_obj = self.find_phone(new_phone)
         if new_phone_obj is not None and new_phone_obj != old_phone_obj:
             raise ValueError(
                 f"Phone {new_phone} already exists for contact {self.name.value}"
             )
-
         old_phone_obj.value = new_phone
+
+    def find_email(self, email: str) -> Email | None:
+        for email_obj in self.emails:
+            if email_obj.value == email:
+                return email_obj
+        return None
 
     def add_email(self, email: str) -> None:
         if self.find_email(email) is not None:
@@ -203,12 +132,6 @@ class Record:
                 f"Email {email} already exists for contact {self.name.value}"
             )
         self.emails.append(Email(email))
-
-    def find_email(self, email: str) -> Email | None:
-        for email_obj in self.emails:
-            if email_obj.value == email:
-                return email_obj
-        return None
 
     def remove_email(self, email: str) -> None:
         email_obj = self.find_email(email)
@@ -222,13 +145,11 @@ class Record:
             raise ValueError(
                 f"Email {old_email} not found for contact {self.name.value}"
             )
-
         new_email_obj = self.find_email(new_email)
         if new_email_obj is not None and new_email_obj != old_email_obj:
             raise ValueError(
                 f"Email {new_email} already exists for contact {self.name.value}"
             )
-
         old_email_obj.value = new_email
 
     def add_address(self, country: str, city: str, street: str, house: str) -> None:
@@ -252,8 +173,13 @@ class Record:
             raise ValueError(f"No address set for contact {self.name.value}")
         self.address = None
 
+    def add_birthday(self, birthday: str) -> None:
+        self.birthday = Birthday(birthday)
+
     @staticmethod
-    def _birthday_for_year(birthday: date, year: int) -> date:
+    def _birthday_for_year(birthday, year: int):
+        from datetime import date
+
         try:
             return birthday.replace(year=year)
         except ValueError:
@@ -263,6 +189,8 @@ class Record:
         if self.birthday is None:
             return None
 
+        from datetime import date
+
         today = date.today()
         birthday = self.birthday.value
         next_birthday = self._birthday_for_year(birthday, today.year)
@@ -271,7 +199,7 @@ class Record:
 
         return (next_birthday - today).days
 
-    def to_dict(self) -> dict[str, str | list[str]]:
+    def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "name": str(self.name),
             "phones": [str(p) for p in self.phones],

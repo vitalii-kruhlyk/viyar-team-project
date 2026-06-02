@@ -8,7 +8,7 @@ class JsonStorage:
     path: Path
 
     def __init__(self, filename: str) -> None:
-        self.path = Path(__file__).resolve().parent / filename
+        self.path = Path(__file__).resolve().parent.parent / filename
 
     def load(self) -> AddressBook:
         if not self.path.exists():
