@@ -1,5 +1,9 @@
 from datetime import date, datetime
-from re import fullmatch
+
+import phonenumbers
+from email_validator import EmailNotValidError
+from email_validator import validate_email as _validate_email
+from phonenumbers import NumberParseException
 
 
 class Field:
@@ -30,27 +34,38 @@ class Name(Field):
 
 class Phone(Field):
     @staticmethod
-    def validate_phone(value: str) -> None:
-        if not isinstance(value, str) or not value.isdigit() or len(value) != 10:
-            raise ValueError("Phone number must contain exactly 10 digits")
+    def validate_phone(value: str) -> str:
+        if not isinstance(value, str):
+            raise ValueError("Phone number must be a string")
+        try:
+            parsed = phonenumbers.parse(value)
+        except NumberParseException:
+            raise ValueError(
+                "Phone number must be in international format, e.g. +380501234567"
+            )
+        if not phonenumbers.is_valid_number(parsed):
+            raise ValueError("Phone number is not valid, e.g. +380501234567")
+        return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
     @Field.value.setter
     def value(self, new_value: str) -> None:
-        self.validate_phone(new_value)
-        self._value = new_value
+        self._value = self.validate_phone(new_value)
 
 
 class Email(Field):
     @staticmethod
-    def validate_email(value: str) -> None:
-        pattern = r"[^@\s]+@[^@\s]+\.[^@\s]+"
-        if not isinstance(value, str) or not fullmatch(pattern, value):
-            raise ValueError("Email must be a valid address, e.g. user@example.com")
+    def validate_email(value: str) -> str:
+        if not isinstance(value, str):
+            raise ValueError("Email must be a string")
+        try:
+            email_info = _validate_email(value, check_deliverability=False)
+            return email_info.normalized
+        except EmailNotValidError as e:
+            raise ValueError(f"Email is not valid: {e}")
 
     @Field.value.setter
     def value(self, new_value: str) -> None:
-        self.validate_email(new_value)
-        self._value = new_value
+        self._value = self.validate_email(new_value)
 
 
 class Birthday(Field):
