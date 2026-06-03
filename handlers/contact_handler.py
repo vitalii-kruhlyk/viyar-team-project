@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import date, timedelta
 
 from handlers.decorators import input_error
 from models import AddressBook, Record
@@ -104,21 +105,27 @@ class ContactHandler:
         if len(args) != 1:
             raise ValueError("Usage: birthday <number of days>")
 
-        name = args[0]
+        days_to_birthday = int(args[0])
+        birthday_date = date.today() + timedelta(days=days_to_birthday)
 
-        record = self.book.find(name)
-        if record is None:
-            raise KeyError
+        text_massage = ""
+        for value in self.book.data.values():
+            if value.birthday is None:
+                continue
 
-        days = record.days_to_birthday()
-        if days is None:
-            text_return = f"Birthday for contact {name} is not set."
-        elif days == 0:
-            text_return = f"Today is {name}'s birthday!"
-        else:
-            text_return = f"{days} day(s) left until {name}'s birthday"
+            if birthday_date == date.fromisoformat(
+                date.strftime(value.birthday.value, "%Y-%m-%d")
+            ).replace(year=birthday_date.year):
+                text_massage += f"{value.name.value} " + "\n"
 
-        return text_return, False
+        text_massage = (
+            f"People who have a birthday in {days_to_birthday} day(s): \n"
+            + text_massage
+            if text_massage != ""
+            else f"There are no birthdays in {days_to_birthday} day(s)"
+        )
+
+        return text_massage, False
 
     @input_error
     def change(self, args: list[str]) -> tuple[str, bool]:
