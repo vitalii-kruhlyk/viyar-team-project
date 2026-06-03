@@ -192,6 +192,9 @@ class ContactHandler:
         if len(args) != 1:
             raise ValueError("Usage: show_page <page_size>")
 
+        if not args[0].isdigit() or int(args[0]) == 0:
+            raise ValueError("Page size must be a positive whole number")
+
         page_size = int(args[0])
 
         if not self.book.data:
