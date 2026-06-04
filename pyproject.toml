@@ -10,12 +10,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.0",
+    "pytest>=9.0.3",
     "ruff>=0.15.15",
 ]
 
 [tool.ruff]
 # The standard line length (same as Black)
-line-length = 88
+line-length = 120
 
 [tool.ruff.lint]
 # E: pycodestyle (standard errors)
