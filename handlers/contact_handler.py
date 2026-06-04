@@ -105,27 +105,32 @@ class ContactHandler:
         if len(args) != 1:
             raise ValueError("Usage: birthday <number of days>")
 
-        days_to_birthday = int(args[0])
-        birthday_date = date.today() + timedelta(days=days_to_birthday)
+        day_today = date.today()
+        number_of_days = int(args[0])
+        birthday_date_end = day_today + timedelta(days=number_of_days)
 
-        text_massage = ""
+        text_message = ""
         for value in self.book.data.values():
             if value.birthday is None:
                 continue
 
-            if birthday_date == date.fromisoformat(
+            contact_birthday = date.fromisoformat(
                 date.strftime(value.birthday.value, "%Y-%m-%d")
-            ).replace(year=birthday_date.year):
-                text_massage += f"{value.name.value} " + "\n"
+            ).replace(year=day_today.year)
 
-        text_massage = (
-            f"People who have a birthday in {days_to_birthday} day(s): \n"
-            + text_massage
-            if text_massage != ""
-            else f"There are no birthdays in {days_to_birthday} day(s)"
+            if contact_birthday < day_today:
+                contact_birthday = contact_birthday.replace(year=day_today.year + 1)
+
+            if day_today <= contact_birthday <= birthday_date_end:
+                text_message += f"{value.name.value} " + "\n"
+
+        text_message = (
+            f"People who have a birthday in {number_of_days} day(s): \n" + text_message
+            if text_message != ""
+            else f"There are no birthdays in {number_of_days} day(s)"
         )
 
-        return text_massage, False
+        return text_message, False
 
     @input_error
     def change(self, args: list[str]) -> tuple[str, bool]:
