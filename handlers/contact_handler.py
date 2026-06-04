@@ -11,7 +11,9 @@ class ContactHandler:
 
     def __init__(self, storage: JsonStorage) -> None:
         self.storage = storage
-        self.book = storage.load()
+        self.book = AddressBook()
+        for item in storage.load():
+            self.book.add_record(Record.from_dict(item))
         self.commands = {
             "add": self.add,
             "add_birthday": self.add_birthday,
@@ -34,6 +36,9 @@ class ContactHandler:
             "search_address": self.search_address,
         }
 
+    def _save(self) -> None:
+        self.storage.save([record.to_dict() for record in self.book.values()])
+
     @input_error
     def add(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 2:
@@ -49,7 +54,7 @@ class ContactHandler:
         else:
             record.add_phone(phone_number)
 
-        self.storage.save(self.book)
+        self._save()
         return f"Contact {name} added.", False
 
     @input_error
@@ -64,7 +69,7 @@ class ContactHandler:
             raise KeyError
 
         record.add_birthday(birthday)
-        self.storage.save(self.book)
+        self._save()
         return f"Birthday for {name} added.", False
 
     @input_error
@@ -79,7 +84,7 @@ class ContactHandler:
             raise KeyError
 
         record.add_email(email)
-        self.storage.save(self.book)
+        self._save()
         return f"Email {email} added to contact {name}.", False
 
     @input_error
@@ -96,7 +101,7 @@ class ContactHandler:
             raise KeyError
 
         record.add_address(country, city, street, house)
-        self.storage.save(self.book)
+        self._save()
         return f"Address added to contact {name}.", False
 
     @input_error
@@ -132,7 +137,7 @@ class ContactHandler:
             raise KeyError
 
         record.edit_phone(old_number, new_number)
-        self.storage.save(self.book)
+        self._save()
         return f"Contact {name} changed.", False
 
     @input_error
@@ -147,7 +152,7 @@ class ContactHandler:
             raise KeyError
 
         record.edit_email(old_email, new_email)
-        self.storage.save(self.book)
+        self._save()
         return f"Email updated for contact {name}.", False
 
     @input_error
@@ -164,7 +169,7 @@ class ContactHandler:
             raise KeyError
 
         record.change_address(country, city, street, house)
-        self.storage.save(self.book)
+        self._save()
         return f"Address updated for contact {name}.", False
 
     @input_error
@@ -218,7 +223,7 @@ class ContactHandler:
             raise KeyError
 
         self.book.delete(name)
-        self.storage.save(self.book)
+        self._save()
         return f"Contact {name} deleted.", False
 
     @input_error
@@ -233,7 +238,7 @@ class ContactHandler:
             raise KeyError
 
         record.remove_phone(phone_number)
-        self.storage.save(self.book)
+        self._save()
         return f"Phone number {phone_number} removed from contact {name}.", False
 
     @input_error
@@ -248,7 +253,7 @@ class ContactHandler:
             raise KeyError
 
         record.remove_email(email)
-        self.storage.save(self.book)
+        self._save()
         return f"Email {email} removed from contact {name}.", False
 
     @input_error
@@ -263,7 +268,7 @@ class ContactHandler:
             raise KeyError
 
         record.remove_address()
-        self.storage.save(self.book)
+        self._save()
         return f"Address removed from contact {name}.", False
 
     @input_error
