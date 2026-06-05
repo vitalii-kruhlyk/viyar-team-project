@@ -74,6 +74,7 @@ class Record:
         self.emails = []
         self.birthday = Birthday(birthday) if birthday is not None else None
         self.address = None
+        self.favorite = False
 
     def __str__(self) -> str:
         phones = "; ".join(p.value for p in self.phones)
@@ -301,3 +302,6 @@ class AddressBook(UserDict[str, Record]):
             ):
                 results.append(record)
         return results
+
+    def get_favorites(self):
+        return [record for record in self.data.values() if record.favorite]
