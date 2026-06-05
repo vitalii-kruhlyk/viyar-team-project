@@ -15,29 +15,29 @@ class TaskHandler:
         self.storage = storage
         self.book = TaskBook.from_list(storage.load())
         self.commands = {
-            "add_task": self.add_task,
-            "edit_task": self.edit_task,
-            "edit_task_desc": self.edit_task_desc,
-            "delete_task": self.delete_task,
-            "show_tasks": self.show_tasks,
-            "search_task": self.search_task,
+            "task_add": self.add_task,
+            "task_edit": self.edit_task,
+            "task_edit_desc": self.edit_task_desc,
+            "task_delete": self.delete_task,
+            "task_show": self.show_tasks,
+            "task_search": self.search_task,
             "task_status": self.task_status,
-            "tasks_by_status": self.tasks_by_status,
+            "task_by_status": self.tasks_by_status,
         }
         self.descriptions = {
-            "add_task": "Create a new task: add_task <title>",
-            "edit_task": "Edit task title: edit_task <id> <new_title>",
-            "edit_task_desc": (
-                "Edit task description: edit_task_desc <id> <new_description>"
+            "task_add": "Create a new task: task_add <title>",
+            "task_edit": "Edit task title: task_edit <id> <new_title>",
+            "task_edit_desc": (
+                "Edit task description: task_edit_desc <id> <new_description>"
             ),
-            "delete_task": "Delete a task: delete_task <id>",
-            "show_tasks": "Show all tasks",
-            "search_task": "Search tasks by title or description: search_task <query>",
+            "task_delete": "Delete a task: task_delete <id>",
+            "task_show": "Show all tasks",
+            "task_search": "Search tasks by title or description: task_search <query>",
             "task_status": (
                 "Change task status: task_status <id> <status>"
                 "  (new, in_progress, done, cancelled)"
             ),
-            "tasks_by_status": "Filter tasks by status: tasks_by_status <status>",
+            "task_by_status": "Filter tasks by status: task_by_status <status>",
         }
 
     def _save(self) -> None:
@@ -46,7 +46,7 @@ class TaskHandler:
     @input_error
     def add_task(self, args: list[str]) -> tuple[str, bool]:
         if not args:
-            raise ValueError("Usage: add_task <title>")
+            raise ValueError("Usage: task_add <title>")
 
         title = args[0]
         task = self.book.add_task(title)
@@ -56,7 +56,7 @@ class TaskHandler:
     @input_error
     def edit_task(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 2:
-            raise ValueError("Usage: edit_task <id> <new_title>")
+            raise ValueError("Usage: task_edit <id> <new_title>")
 
         if not args[0].isdigit():
             raise ValueError("Task id must be a positive number")
@@ -78,7 +78,7 @@ class TaskHandler:
     @input_error
     def edit_task_desc(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 2:
-            raise ValueError("Usage: edit_task_desc <id> <new_description>")
+            raise ValueError("Usage: task_edit_desc <id> <new_description>")
 
         if not args[0].isdigit():
             raise ValueError("Task id must be a positive number")
@@ -97,7 +97,7 @@ class TaskHandler:
     @input_error
     def delete_task(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 1:
-            raise ValueError("Usage: delete_task <id>")
+            raise ValueError("Usage: task_delete <id>")
 
         if not args[0].isdigit():
             raise ValueError("Task id must be a positive number")
@@ -122,7 +122,7 @@ class TaskHandler:
     @input_error
     def search_task(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 1:
-            raise ValueError("Usage: search_task <query>")
+            raise ValueError("Usage: task_search <query>")
 
         results = self.book.search(args[0])
         if not results:
@@ -152,7 +152,7 @@ class TaskHandler:
     @input_error
     def tasks_by_status(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 1:
-            raise ValueError("Usage: tasks_by_status <status>")
+            raise ValueError("Usage: task_by_status <status>")
 
         status = TaskStatus.from_str(args[0])
         results = self.book.filter_by_status(status)
