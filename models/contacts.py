@@ -88,7 +88,7 @@ class Record:
 
     def find_phone(self, phone: str) -> Phone | None:
         try:
-            normalized = Phone.validate_phone(phone)
+            normalized = Phone(phone).value
         except ValueError:
             normalized = phone
         for phone_obj in self.phones:
@@ -126,7 +126,7 @@ class Record:
 
     def find_email(self, email: str) -> Email | None:
         try:
-            normalized = Email.validate_email(email)
+            normalized = Email(email).value
         except ValueError:
             normalized = email
         for email_obj in self.emails:
