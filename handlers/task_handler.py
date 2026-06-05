@@ -68,10 +68,7 @@ class TaskHandler:
         if task is None:
             raise KeyError
 
-        if not new_title.strip():
-            raise ValueError("Task title must be a non-empty string")
-
-        task.title = new_title.strip()
+        task.edit_title(new_title)
         self._save()
         return f"Task [{task_id}] title updated to '{task.title}'.", False
 
@@ -90,7 +87,7 @@ class TaskHandler:
         if task is None:
             raise KeyError
 
-        task.description = new_desc.strip() if new_desc.strip() else None
+        task.edit_description(new_desc)
         self._save()
         return f"Task [{task_id}] description updated.", False
 

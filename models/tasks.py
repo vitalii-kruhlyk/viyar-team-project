@@ -41,6 +41,16 @@ class Task:
         self.description = description.strip() if description else None
         self.status = status
 
+    def edit_title(self, title: str) -> None:
+        if not isinstance(title, str) or not title.strip():
+            raise ValueError("Task title must be a non-empty string")
+        self.title = title.strip()
+
+    def edit_description(self, description: str | None) -> None:
+        self.description = (
+            description.strip() if description and description.strip() else None
+        )
+
     def __str__(self) -> str:
         parts = [f"[{self.id}] {self.title} ({self.status})"]
         if self.description:
