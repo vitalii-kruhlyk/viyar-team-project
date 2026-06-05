@@ -48,21 +48,21 @@ class TaskHandler:
         if not args:
             raise ValueError("Usage: task_add <title>")
 
-        title = args[0]
+        title = " ".join(args)
         task = self.book.add_task(title)
         self._save()
         return f"Task [{task.id}] '{task.title}' created.", False
 
     @input_error
     def edit_task(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 2:
+        if len(args) < 2:
             raise ValueError("Usage: task_edit <id> <new_title>")
 
         if not args[0].isdigit():
             raise ValueError("Task id must be a positive number")
 
         task_id = int(args[0])
-        new_title = args[1]
+        new_title = " ".join(args[1:])
 
         task = self.book.find(task_id)
         if task is None:
@@ -77,14 +77,14 @@ class TaskHandler:
 
     @input_error
     def edit_task_desc(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 2:
+        if len(args) < 2:
             raise ValueError("Usage: task_edit_desc <id> <new_description>")
 
         if not args[0].isdigit():
             raise ValueError("Task id must be a positive number")
 
         task_id = int(args[0])
-        new_desc = args[1]
+        new_desc = " ".join(args[1:])
 
         task = self.book.find(task_id)
         if task is None:
@@ -121,25 +121,26 @@ class TaskHandler:
 
     @input_error
     def search_task(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
+        if not args:
             raise ValueError("Usage: task_search <query>")
 
-        results = self.book.search(args[0])
+        query = " ".join(args)
+        results = self.book.search(query)
         if not results:
-            return f"No tasks found for query: {args[0]}", False
+            return f"No tasks found for query: {query}", False
 
         return "\n".join(str(task) for task in results), False
 
     @input_error
     def task_status(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 2:
+        if len(args) < 2:
             raise ValueError("Usage: task_status <id> <status>")
 
         if not args[0].isdigit():
             raise ValueError("Task id must be a positive number")
 
         task_id = int(args[0])
-        new_status = TaskStatus.from_str(args[1])
+        new_status = TaskStatus.from_str(" ".join(args[1:]))
 
         task = self.book.find(task_id)
         if task is None:
@@ -151,10 +152,10 @@ class TaskHandler:
 
     @input_error
     def tasks_by_status(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
+        if not args:
             raise ValueError("Usage: task_by_status <status>")
 
-        status = TaskStatus.from_str(args[0])
+        status = TaskStatus.from_str(" ".join(args))
         results = self.book.filter_by_status(status)
 
         if not results:
