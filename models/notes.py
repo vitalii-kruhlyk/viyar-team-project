@@ -31,7 +31,7 @@ class Note:
         if not tag:
             raise ValueError("Tag cannot be empty")
         if tag in self.tags:
-            raise ValueError(f"Tag '{tag}' already exists on this note")
+            return
         self.tags.append(tag)
 
     def remove_tag(self, tag: str) -> None:
@@ -86,11 +86,7 @@ class NoteBook:
 
     def search(self, query: str) -> list[Note]:
         q = query.lower()
-        return [
-            n
-            for n in self._notes.values()
-            if q in n.title.lower() or q in n.content.lower()
-        ]
+        return [n for n in self._notes.values() if q in n.title.lower() or q in n.content.lower()]
 
     def find_by_tag(self, tag: str) -> list[Note]:
         tag = tag.lower().strip()
