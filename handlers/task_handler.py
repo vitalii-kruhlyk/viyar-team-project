@@ -34,7 +34,7 @@ class TaskHandler:
         if task is None:
             raise KeyError
 
-        task.title = flags["-t"].strip()
+        task.edit_title(flags["-t"])
         self._save()
         return f"Task [{task.id}] title updated to '{task.title}'.", False
 
@@ -47,7 +47,7 @@ class TaskHandler:
         if task is None:
             raise KeyError
 
-        task.description = flags["-d"].strip() or None
+        task.edit_description(flags["-d"])
         self._save()
         return f"Task [{task.id}] description updated.", False
 
