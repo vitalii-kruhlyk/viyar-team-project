@@ -34,6 +34,9 @@ class ContactHandler:
             "find_email": self.find_email,
             "search": self.search,
             "search_address": self.search_address,
+            "favorite": self.add_to_favorites,
+            "unfavorite": self.remove_from_favorites,
+            "show_favorites": self.show_favorites,
         }
 
     def _save(self) -> None:
