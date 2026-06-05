@@ -91,11 +91,11 @@ class Record:
 
     @property
     def favorite(self):
-        return self.favorite
+        return self._favorite
 
     @favorite.setter
     def favorite(self, value) -> None:
-        self.favorite = value
+        self._favorite = value
 
     def find_phone(self, phone: str) -> Phone | None:
         try:
