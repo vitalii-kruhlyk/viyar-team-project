@@ -114,12 +114,11 @@ class ContactHandler:
             if value.birthday is None:
                 continue
 
-            contact_birthday = date.fromisoformat(
-                date.strftime(value.birthday.value, "%Y-%m-%d")
-            ).replace(year=day_today.year)
+            bday = value.birthday.value
+            contact_birthday = Record._birthday_for_year(bday, day_today.year)
 
             if contact_birthday < day_today:
-                contact_birthday = contact_birthday.replace(year=day_today.year + 1)
+                contact_birthday = Record._birthday_for_year(bday, day_today.year + 1)
 
             if day_today <= contact_birthday <= birthday_date_end:
                 text_message += f"{value.name.value} " + "\n"
