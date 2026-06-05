@@ -352,7 +352,7 @@ class ContactHandler:
     @input_error
     def remove_from_favorites(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 1:
-            raise ValueError("Usage: favorite <name>")
+            raise ValueError("Usage: unfavorite <name>")
 
         name = args[0]
         record = self.book.find(name)
@@ -361,4 +361,15 @@ class ContactHandler:
 
         record.favorite = False
 
-        return f"{name} removed from favorites", False
+        return f"{name} removed from favorite", False
+
+    @input_error
+    def show_favorites(self, args: list[str]) -> tuple[str, bool]:
+        if not self.book.data:
+            return "No contacts saved.", False
+
+        favorites = self.book.get_favorites()
+        if not favorites:
+            return "No favorites saved.", False
+
+        return "\n".join(str(record) for record in favorites if record.favorite), False
