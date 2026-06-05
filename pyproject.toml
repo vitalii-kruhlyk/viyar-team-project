@@ -15,7 +15,7 @@ dev = [
 
 [tool.ruff]
 # The standard line length (same as Black)
-line-length = 88
+line-length = 120
 
 [tool.ruff.lint]
 # E: pycodestyle (standard errors)
