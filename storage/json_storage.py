@@ -22,6 +22,6 @@ class JsonStorage:
         temp_file = self.path.with_suffix(".tmp")
 
         with open(temp_file, "w", encoding="utf-8") as file:
-            json.dump(data, file, indent=4)
+            json.dump(data, file, indent=4, ensure_ascii=False)
 
         temp_file.replace(self.path)
