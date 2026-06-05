@@ -1,13 +1,13 @@
 from collections.abc import Callable
 
-from handlers import ContactHandler, NoteHandler, TaskHandler
+from handlers import ContactHandler, TaskHandler, NoteHandler
 from storage import JsonStorage
 
 
 class CliBot:
     contacts: ContactHandler
-    notes: NoteHandler
     tasks: TaskHandler
+    notes: NoteHandler
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
     descriptions: dict[str, str]
 
