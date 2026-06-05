@@ -334,3 +334,17 @@ class ContactHandler:
             return "No contacts found for the given address.", False
 
         return "\n".join(str(record) for record in results), False
+
+    @input_error
+    def add_to_favorites(self, args: list[str]) -> tuple[str, bool]:
+        if len(args) != 1:
+            raise ValueError("Usage: favorite <name>")
+
+        name = args[0]
+        record = self.book.find(name)
+        if record is None:
+            raise KeyError
+
+        record.favorite = True
+
+        return f"{name} added to favorites", False
