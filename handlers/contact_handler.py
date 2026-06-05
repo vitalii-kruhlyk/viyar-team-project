@@ -361,7 +361,7 @@ class ContactHandler:
 
         record.favorite = False
 
-        return f"{name} removed from favorite", False
+        return f"{name} removed from favorites", False
 
     @input_error
     def show_favorites(self, args: list[str]) -> tuple[str, bool]:
