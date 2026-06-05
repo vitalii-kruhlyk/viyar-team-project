@@ -66,6 +66,7 @@ class Record:
     emails: list[Email]
     birthday: Birthday | None
     address: Address | None
+    favorite: bool
 
     def __init__(self, name: str, birthday: str | None = None) -> None:
         self.name = Name(name)
@@ -77,7 +78,8 @@ class Record:
     def __str__(self) -> str:
         phones = "; ".join(p.value for p in self.phones)
         emails = "; ".join(e.value for e in self.emails)
-        parts = [f"Contact name: {self.name.value}", f"phones: {phones}"]
+        mark = "*" if self.favorite else ""
+        parts = [f"Contact name: {mark}{self.name.value}", f"phones: {phones}"]
         if emails:
             parts.append(f"emails: {emails}")
         if self.address:
@@ -85,6 +87,14 @@ class Record:
         if self.birthday:
             parts.append(f"birthday: {self.birthday}")
         return ", ".join(parts)
+
+    @property
+    def favorite(self):
+        return self.favorite
+
+    @favorite.setter
+    def favorite(self, value) -> None:
+        self.favorite = value
 
     def find_phone(self, phone: str) -> Phone | None:
         try:
