@@ -1,4 +1,5 @@
 from handlers.contact_handler import ContactHandler
 from handlers.decorators import input_error
+from handlers.task_handler import TaskHandler
 
-__all__ = ["ContactHandler", "input_error"]
+__all__ = ["ContactHandler", "input_error", "TaskHandler"]

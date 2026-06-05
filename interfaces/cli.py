@@ -1,22 +1,31 @@
 from collections.abc import Callable
 
-from handlers import ContactHandler
+from handlers import ContactHandler, TaskHandler
 from storage import JsonStorage
 
 
 class CliBot:
     contacts: ContactHandler
+    tasks: TaskHandler
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
+    descriptions: dict[str, str]
 
     def __init__(self) -> None:
         self.contacts = ContactHandler(JsonStorage("contacts.json"))
+        self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.commands = {
-            **self.contacts.commands,
             "hello": self.hello,
-            "good bye": self.exit_bot,
-            "close": self.exit_bot,
-            "stop": self.exit_bot,
+            "help": self.help,
+            **self.contacts.commands,
+            **self.tasks.commands,
             "exit": self.exit_bot,
+        }
+        self.descriptions = {
+            "hello": "Greet the bot",
+            "help": "Show all available commands with descriptions",
+            **self.contacts.descriptions,
+            **self.tasks.descriptions,
+            "exit": "Exit the bot",
         }
 
     def parse_command(self, user_input: str) -> tuple[str | None, list[str]]:
@@ -29,10 +38,18 @@ class CliBot:
 
         return None, []
 
-    def hello(self, _args: list[str]) -> tuple[str, bool]:
-        return "How can I help you?", False
+    @staticmethod
+    def hello(_args: list[str]) -> tuple[str, bool]:
+        return "How can I help you? Type 'help' to see all available commands.", False
 
-    def exit_bot(self, _args: list[str]) -> tuple[str, bool]:
+    def help(self, _args: list[str]) -> tuple[str, bool]:
+        lines = ["Available commands:", ""]
+        for command, description in self.descriptions.items():
+            lines.append(f"  {command:<20} — {description}")
+        return "\n".join(lines), False
+
+    @staticmethod
+    def exit_bot(_args: list[str]) -> tuple[str, bool]:
         return "Good bye!", True
 
     def run(self) -> None:
@@ -47,8 +64,7 @@ class CliBot:
             command, args = self.parse_command(user_input)
 
             if command is None:
-                available = ", ".join(self.commands.keys())
-                print(f"Unknown command. Available commands: {available}")
+                print("Unknown command. Type 'help' to see all available commands.")
                 continue
 
             command_handler = self.commands[command]
