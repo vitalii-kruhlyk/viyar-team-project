@@ -228,6 +228,8 @@ class Record:
             result["birthday"] = self.birthday.value.isoformat()
         if self.address is not None:
             result["address"] = self.address.to_dict()
+        if self.favorite is not None:
+            result["favorite"] = self.favorite
         return result
 
     @classmethod
@@ -251,6 +253,10 @@ class Record:
         address_data = data.get("address")
         if address_data is not None:
             record.address = Address.from_dict(address_data)
+
+        favorite_data = data.get("favorite")
+        if favorite_data is not None:
+            record.favorite = favorite_data
 
         return record
 

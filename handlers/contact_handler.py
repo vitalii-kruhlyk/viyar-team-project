@@ -349,6 +349,7 @@ class ContactHandler:
             raise KeyError
 
         record.favorite = True
+        self._save()
 
         return f"{name} added to favorites", False
 
@@ -363,6 +364,7 @@ class ContactHandler:
             raise KeyError
 
         record.favorite = False
+        self._save()
 
         return f"{name} removed from favorites", False
 
