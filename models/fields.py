@@ -7,13 +7,15 @@ from phonenumbers import NumberParseException
 
 
 class Field:
-    value: str
-
     def __init__(self, value: str) -> None:
         self.value = value
 
     def __str__(self) -> str:
-        return str(self.value)
+        return str(self._value)
+
+    def validate(self, value: str) -> str:
+        """Переопределить в подклассе для валидации."""
+        return value
 
     @property
     def value(self) -> str:
@@ -21,20 +23,18 @@ class Field:
 
     @value.setter
     def value(self, new_value: str) -> None:
-        self._value = new_value
+        self._value = self.validate(new_value)
 
 
 class Name(Field):
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        if not isinstance(new_value, str) or not new_value.strip():
+    def validate(self, value: str) -> str:
+        if not isinstance(value, str) or not value.strip():
             raise ValueError("Name can't be empty")
-        self._value = new_value.strip()
+        return value.strip()
 
 
 class Phone(Field):
-    @staticmethod
-    def validate_phone(value: str) -> str:
+    def validate(self, value: str) -> str:
         if not isinstance(value, str):
             raise ValueError("Phone number must be a string")
         try:
@@ -47,14 +47,9 @@ class Phone(Field):
             raise ValueError("Phone number is not valid, e.g. +380501234567")
         return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        self._value = self.validate_phone(new_value)
-
 
 class Email(Field):
-    @staticmethod
-    def validate_email(value: str) -> str:
+    def validate(self, value: str) -> str:
         if not isinstance(value, str):
             raise ValueError("Email must be a string")
         try:
@@ -63,20 +58,14 @@ class Email(Field):
         except EmailNotValidError as e:
             raise ValueError(f"Email is not valid: {e}")
 
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        self._value = self.validate_email(new_value)
-
 
 class Birthday(Field):
     def __str__(self) -> str:
-        return self.value.strftime("%d.%m.%Y")
+        return self._value.strftime("%d.%m.%Y")
 
-    @staticmethod
-    def validate_birthday(value: str) -> date:
+    def validate(self, value: str) -> date:
         if not isinstance(value, str):
             raise ValueError("Birthday must be in format DD.MM.YYYY")
-
         try:
             try:
                 return date.fromisoformat(value)
@@ -84,7 +73,3 @@ class Birthday(Field):
                 return datetime.strptime(value, "%d.%m.%Y").date()
         except ValueError:
             raise ValueError("Birthday must be in format DD.MM.YYYY")
-
-    @Field.value.setter
-    def value(self, new_value: str) -> None:
-        self._value = self.validate_birthday(new_value)
