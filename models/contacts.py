@@ -204,20 +204,6 @@ class Record:
         except ValueError:
             return date(year, 3, 1)
 
-    def days_to_birthday(self) -> int | None:
-        if self.birthday is None:
-            return None
-
-        from datetime import date
-
-        today = date.today()
-        birthday = self.birthday.value
-        next_birthday = self._birthday_for_year(birthday, today.year)
-        if next_birthday < today:
-            next_birthday = self._birthday_for_year(birthday, today.year + 1)
-
-        return (next_birthday - today).days
-
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "name": str(self.name),

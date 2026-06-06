@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import date, timedelta
 
 from handlers.decorators import input_error
 from models import AddressBook, Record
@@ -140,23 +141,33 @@ class ContactHandler:
     @input_error
     def birthday(self, args: list[str]) -> tuple[str, bool]:
         if len(args) != 1:
-            raise ValueError("Usage: birthday <name>")
+            raise ValueError("Usage: birthday <number of days>")
 
-        name = args[0]
+        day_today = date.today()
+        number_of_days = int(args[0])
+        birthday_date_end = day_today + timedelta(days=number_of_days)
 
-        record = self.book.find(name)
-        if record is None:
-            raise KeyError
+        text_message = ""
+        for value in self.book.data.values():
+            if value.birthday is None:
+                continue
 
-        days = record.days_to_birthday()
-        if days is None:
-            text_return = f"Birthday for contact {name} is not set."
-        elif days == 0:
-            text_return = f"Today is {name}'s birthday!"
-        else:
-            text_return = f"{days} day(s) left until {name}'s birthday"
+            bday = value.birthday.value
+            contact_birthday = Record._birthday_for_year(bday, day_today.year)
 
-        return text_return, False
+            if contact_birthday < day_today:
+                contact_birthday = Record._birthday_for_year(bday, day_today.year + 1)
+
+            if day_today <= contact_birthday <= birthday_date_end:
+                text_message += f"{value.name.value} " + "\n"
+
+        text_message = (
+            f"People who have a birthday in {number_of_days} day(s): \n" + text_message
+            if text_message != ""
+            else f"There are no birthdays in {number_of_days} day(s)"
+        )
+
+        return text_message, False
 
     @input_error
     def change(self, args: list[str]) -> tuple[str, bool]:
