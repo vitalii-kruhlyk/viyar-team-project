@@ -6,8 +6,10 @@ from storage import JsonStorage
 
 
 class ContactHandler:
+    storage: JsonStorage
     book: AddressBook
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
+    descriptions: dict[str, str]
 
     def __init__(self, storage: JsonStorage) -> None:
         self.storage = storage
@@ -34,6 +36,34 @@ class ContactHandler:
             "find_email": self.find_email,
             "search": self.search,
             "search_address": self.search_address,
+        }
+        self.descriptions = {
+            "add": "Add a new contact or phone: add <name> <phone>",
+            "add_birthday": "Add birthday: add_birthday <name> <DD.MM.YYYY>",
+            "add_email": "Add email: add_email <name> <email>",
+            "add_address": (
+                "Add address: add_address <name> <country> <city> <street> <house>"
+            ),
+            "birthday": "Show days until birthday: birthday <name>",
+            "change": "Change phone: change <name> <old_phone> <new_phone>",
+            "change_email": "Change email: change_email <name> <old_email> <new_email>",
+            "change_address": (
+                "Change address: "
+                "change_address <name> <country> <city> <street> <house>"
+            ),
+            "phone": "Show contact info: phone <name>",
+            "show": "Show all contacts",
+            "show_page": "Show contacts page by page: show_page <page_size>",
+            "delete": "Delete contact: delete <name>",
+            "remove_phone": "Remove phone: remove_phone <name> <phone>",
+            "remove_email": "Remove email: remove_email <name> <email>",
+            "remove_address": "Remove address: remove_address <name>",
+            "find_phone": "Find phone in contact: find_phone <name> <phone>",
+            "find_email": "Find email in contact: find_email <name> <email>",
+            "search": "Search by name, phone or email: search <query>",
+            "search_address": (
+                "Search by address: search_address <country> [city] [street] [house]"
+            ),
         }
 
     def _save(self) -> None:

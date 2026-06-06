@@ -1,5 +1,6 @@
 from models.contacts import Address, AddressBook, Record
 from models.fields import Birthday, Email, Field, Name, Phone
+from models.tasks import Task, TaskBook, TaskStatus
 from models.notes import Note, NoteBook
 
 __all__ = [
@@ -11,6 +12,9 @@ __all__ = [
     "Address",
     "Record",
     "AddressBook",
+    "Task",
+    "TaskBook",
+    "TaskStatus",
     "Note",
     "NoteBook",
 ]
