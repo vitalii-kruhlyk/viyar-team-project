@@ -370,11 +370,9 @@ class ContactHandler:
 
     @input_error
     def show_favorites(self, args: list[str]) -> tuple[str, bool]:
-        if not self.book.data:
-            return "No contacts saved.", False
 
         favorites = self.book.get_favorites()
         if not favorites:
             return "No favorites saved.", False
 
-        return "\n".join(str(record) for record in favorites if record.favorite), False
+        return "\n".join(str(record) for record in favorites), False
