@@ -66,6 +66,7 @@ class Record:
     emails: list[Email]
     birthday: Birthday | None
     address: Address | None
+    favorite: bool
 
     def __init__(self, name: str, birthday: str | None = None) -> None:
         self.name = Name(name)
@@ -73,11 +74,13 @@ class Record:
         self.emails = []
         self.birthday = Birthday(birthday) if birthday is not None else None
         self.address = None
+        self.favorite = False
 
     def __str__(self) -> str:
         phones = "; ".join(p.value for p in self.phones)
         emails = "; ".join(e.value for e in self.emails)
-        parts = [f"Contact name: {self.name.value}", f"phones: {phones}"]
+        mark = "*" if self.favorite else ""
+        parts = [f"Contact name: {mark}{self.name.value}", f"phones: {phones}"]
         if emails:
             parts.append(f"emails: {emails}")
         if self.address:
@@ -85,6 +88,14 @@ class Record:
         if self.birthday:
             parts.append(f"birthday: {self.birthday}")
         return ", ".join(parts)
+
+    @property
+    def favorite(self):
+        return self._favorite
+
+    @favorite.setter
+    def favorite(self, value) -> None:
+        self._favorite = value
 
     def find_phone(self, phone: str) -> Phone | None:
         try:
@@ -217,6 +228,8 @@ class Record:
             result["birthday"] = self.birthday.value.isoformat()
         if self.address is not None:
             result["address"] = self.address.to_dict()
+        if self.favorite is not None:
+            result["favorite"] = self.favorite
         return result
 
     @classmethod
@@ -240,6 +253,10 @@ class Record:
         address_data = data.get("address")
         if address_data is not None:
             record.address = Address.from_dict(address_data)
+
+        favorite_data = data.get("favorite")
+        if favorite_data is not None:
+            record.favorite = favorite_data
 
         return record
 
@@ -291,3 +308,6 @@ class AddressBook(UserDict[str, Record]):
             ):
                 results.append(record)
         return results
+
+    def get_favorites(self):
+        return [record for record in self.data.values() if record.favorite]

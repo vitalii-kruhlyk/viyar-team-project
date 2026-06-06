@@ -36,6 +36,9 @@ class ContactHandler:
             "find_email": self.find_email,
             "search": self.search,
             "search_address": self.search_address,
+            "favorite": self.add_to_favorites,
+            "unfavorite": self.remove_from_favorites,
+            "show_favorites": self.show_favorites,
         }
         self.descriptions = {
             "add": "Add a new contact or phone: add <name> <phone>",
@@ -364,3 +367,42 @@ class ContactHandler:
             return "No contacts found for the given address.", False
 
         return "\n".join(str(record) for record in results), False
+
+    @input_error
+    def add_to_favorites(self, args: list[str]) -> tuple[str, bool]:
+        if len(args) != 1:
+            raise ValueError("Usage: favorite <name>")
+
+        name = args[0]
+        record = self.book.find(name)
+        if record is None:
+            raise KeyError
+
+        record.favorite = True
+        self._save()
+
+        return f"{name} added to favorites", False
+
+    @input_error
+    def remove_from_favorites(self, args: list[str]) -> tuple[str, bool]:
+        if len(args) != 1:
+            raise ValueError("Usage: unfavorite <name>")
+
+        name = args[0]
+        record = self.book.find(name)
+        if record is None:
+            raise KeyError
+
+        record.favorite = False
+        self._save()
+
+        return f"{name} removed from favorites", False
+
+    @input_error
+    def show_favorites(self, args: list[str]) -> tuple[str, bool]:
+
+        favorites = self.book.get_favorites()
+        if not favorites:
+            return "No favorites saved.", False
+
+        return "\n".join(str(record) for record in favorites), False
