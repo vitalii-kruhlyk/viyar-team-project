@@ -71,7 +71,7 @@ class CurrencyService:
             "currencies": self.get_currency_rate
         }
         self.descriptions = {
-            "currencies": "Gets the exchange rate for today: currencies"
+            "currencies": "Gets the exchange rate for today"
         }
         self.currencies = ["USD", "EUR", "PLN"]
 
