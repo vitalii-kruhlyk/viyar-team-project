@@ -1,27 +1,15 @@
-from collections.abc import Callable
-
 from handlers.decorators import input_error
 from models import NoteBook
 from storage import JsonStorage
 
 
 class NoteHandler:
+    storage: JsonStorage
     book: NoteBook
-    commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
 
     def __init__(self, storage: JsonStorage) -> None:
         self.storage = storage
         self.book = NoteBook.from_list(storage.load())
-        self.commands = {
-            "note_add": self.note_add,
-            "note_edit": self.note_edit,
-            "note_delete": self.note_delete,
-            "note_show": self.note_show,
-            "note_find": self.note_find,
-            "note_tag_add": self.note_tag_add,
-            "note_tag_remove": self.note_tag_remove,
-            "note_find_tag": self.note_find_tag,
-        }
 
     def _save(self) -> None:
         self.storage.save(self.book.to_list())
@@ -30,76 +18,74 @@ class NoteHandler:
         note_id = int(id_str)
         note = self.book.get(note_id)
         if note is None:
-            raise KeyError(note_id)
+            raise KeyError("Note not found")
         return note
 
     @input_error
-    def note_add(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) < 2:
-            raise ValueError("Usage: note_add <title> <content...>")
-        title = args[0]
-        content = " ".join(args[1:])
-        note = self.book.add(title, content)
+    def add_note(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-t" not in flags or "-c" not in flags:
+            raise ValueError("Usage: add --note -t <title> -c <content>")
+        note = self.book.add(flags["-t"], flags["-c"])
         self._save()
-        return f"Note [{note.id}] '{title}' added.", False
+        return f"Note [{note.id}] '{note.title}' added.", False
 
     @input_error
-    def note_edit(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) < 2:
-            raise ValueError("Usage: note_edit <id> <content...>")
-        note = self._get_note_or_raise(args[0])
-        note.edit(" ".join(args[1:]))
+    def add_tag(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags or "-t" not in flags:
+            raise ValueError("Usage: add --tag -i <id> -t <tag>")
+        note = self._get_note_or_raise(flags["-i"])
+        note.add_tag(flags["-t"])
+        self._save()
+        return f"Tag '{flags['-t']}' added to note [{note.id}].", False
+
+    @input_error
+    def edit_note(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags or "-c" not in flags:
+            raise ValueError("Usage: edit --note -i <id> -c <new_content>")
+        note = self._get_note_or_raise(flags["-i"])
+        note.edit(flags["-c"])
         self._save()
         return f"Note [{note.id}] updated.", False
 
     @input_error
-    def note_delete(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
-            raise ValueError("Usage: note_delete <id>")
-        note = self._get_note_or_raise(args[0])
+    def remove_tag(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags or "-t" not in flags:
+            raise ValueError("Usage: remove --tag -i <id> -t <tag>")
+        note = self._get_note_or_raise(flags["-i"])
+        note.remove_tag(flags["-t"])
+        self._save()
+        return f"Tag '{flags['-t']}' removed from note [{note.id}].", False
+
+    @input_error
+    def delete_note(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags:
+            raise ValueError("Usage: delete --note -i <id>")
+        note = self._get_note_or_raise(flags["-i"])
         self.book.delete(note.id)
         self._save()
         return f"Note [{note.id}] deleted.", False
 
     @input_error
-    def note_show(self, _args: list[str]) -> tuple[str, bool]:
+    def show_notes(self, _flags: dict[str, str]) -> tuple[str, bool]:
         notes = self.book.all()
         if not notes:
             return "No notes saved.", False
         return "\n".join(str(n) for n in notes), False
 
     @input_error
-    def note_find(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
-            raise ValueError("Usage: note_find <query>")
-        results = self.book.search(args[0])
+    def search_note(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-q" not in flags:
+            raise ValueError("Usage: search --note -q <query>")
+        results = self.book.search(flags["-q"])
         if not results:
-            return f"No notes found for query: {args[0]}", False
+            return f"No notes found for query: {flags['-q']}", False
         return "\n".join(str(n) for n in results), False
 
     @input_error
-    def note_tag_add(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 2:
-            raise ValueError("Usage: note_tag_add <id> <tag>")
-        note = self._get_note_or_raise(args[0])
-        note.add_tag(args[1])
-        self._save()
-        return f"Tag '{args[1]}' added to note [{note.id}].", False
-
-    @input_error
-    def note_tag_remove(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 2:
-            raise ValueError("Usage: note_tag_remove <id> <tag>")
-        note = self._get_note_or_raise(args[0])
-        note.remove_tag(args[1])
-        self._save()
-        return f"Tag '{args[1]}' removed from note [{note.id}].", False
-
-    @input_error
-    def note_find_tag(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
-            raise ValueError("Usage: note_find_tag <tag>")
-        results = self.book.find_by_tag(args[0])
+    def filter_by_tag(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-t" not in flags:
+            raise ValueError("Usage: filter --note -t <tag>")
+        results = self.book.find_by_tag(flags["-t"])
         if not results:
-            return f"No notes found with tag: {args[0]}", False
+            return f"No notes found with tag: {flags['-t']}", False
         return "\n".join(str(n) for n in results), False
