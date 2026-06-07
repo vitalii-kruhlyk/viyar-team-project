@@ -62,3 +62,45 @@ class WeatherService:
             return [result.get("latitude"), result.get("longitude")]
 
         return None
+
+class CurrencyService:
+    commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
+
+    def __init__(self) -> None:
+        self.commands = {
+            "currencies": self.get_currency_rate
+        }
+        self.descriptions = {
+            "currencies": "Gets the exchange rate for today: currencies"
+        }
+        self.currencies = ["USD", "EUR", "PLN"]
+
+    @input_error
+    def get_currency_rate(self, args: list[str]) -> tuple[str, bool]:
+
+        url = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+
+        response = requests.get(url)
+        if response.status_code == 200:
+
+            rates = response.json()
+
+            for currency in self.currencies:
+
+                rate = next(
+                    (item for item in rates if item["cc"] == currency),
+                    None
+                    )
+
+                if rate is None:
+                    return f"Currency {currency} not found", False
+
+                return (
+                    f"{rate['cc']}\n"
+                    f"Rate: {rate['rate']} UAH\n"
+                    f"Date: {rate['exchangedate']}"
+                ), False
+
+        return "Unable to retrieve currency data", False
