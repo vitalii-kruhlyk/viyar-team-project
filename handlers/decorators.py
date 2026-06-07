@@ -6,8 +6,8 @@ def input_error(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except KeyError:
-            return "Contact not found", False
+        except KeyError as e:
+            return str(e) if str(e) else "Not found", False
         except ValueError as error:
             return str(error), False
         except IndexError:

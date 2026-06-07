@@ -1,10 +1,25 @@
 import shlex
 
 
+def _is_flag(token: str) -> bool:
+    if not token.startswith("-"):
+        return False
+    rest = token[1:]
+    if not rest:
+        return False
+    # "-5", "-3.14" — это числа, а не флаги
+    try:
+        float(rest)
+        return False
+    except ValueError:
+        return True
+
+
 def parse_flags(raw_args: list[str]) -> dict[str, str]:
     """
     Парсит список аргументов в словарь флагов.
     Один флаг — одно значение. Повторный флаг — ошибка.
+    Отрицательные числа (например -5) не считаются флагами.
 
     Пример:
         ["-n", "John Dou", "-p", "+380961234567,+380671234567"]
@@ -14,13 +29,13 @@ def parse_flags(raw_args: list[str]) -> dict[str, str]:
     i = 0
     while i < len(raw_args):
         token = raw_args[i]
-        if token.startswith("-"):
+        if _is_flag(token):
             if token in result:
                 raise ValueError(
                     f"Flag '{token}' specified more than once. "
                     "Use comma-separated values instead: -p +380960000000,+380670000000"
                 )
-            if i + 1 < len(raw_args) and not raw_args[i + 1].startswith("-"):
+            if i + 1 < len(raw_args) and not _is_flag(raw_args[i + 1]):
                 result[token] = raw_args[i + 1]
                 i += 2
             else:

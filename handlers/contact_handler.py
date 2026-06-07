@@ -51,7 +51,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         for phone in split_values(flags["-p"]):
             record.add_phone(phone)
@@ -67,7 +67,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         for email in split_values(flags["-e"]):
             record.add_email(email)
@@ -83,7 +83,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.add_birthday(flags["-b"])
         self._save()
@@ -98,7 +98,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.add_address(flags["-country"], flags["-city"], flags["-street"], flags["-house"])
         self._save()
@@ -106,13 +106,13 @@ class ContactHandler:
 
     @input_error
     def birthday(self, flags: dict[str, str]) -> tuple[str, bool]:
-        if "-n" not in flags:
-            raise ValueError("Usage: birthday --upcoming -n <days>")
+        if "-days" not in flags:
+            raise ValueError("Usage: birthday --upcoming -days <number>")
 
-        if not flags["-n"].isdigit() or int(flags["-n"]) <= 0:
+        if not flags["-days"].isdigit() or int(flags["-days"]) <= 0:
             raise ValueError("Number of days must be a positive whole number")
 
-        number_of_days = int(flags["-n"])
+        number_of_days = int(flags["-days"])
         day_today = date.today()
         birthday_date_end = day_today + timedelta(days=number_of_days)
 
@@ -141,7 +141,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.edit_phone(flags["-old"], flags["-new"])
         self._save()
@@ -155,7 +155,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.edit_email(flags["-old"], flags["-new"])
         self._save()
@@ -170,7 +170,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.change_address(flags["-country"], flags["-city"], flags["-street"], flags["-house"])
         self._save()
@@ -201,7 +201,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         return str(record), False
 
@@ -212,7 +212,7 @@ class ContactHandler:
 
         name = flags["-n"]
         if self.book.find(name) is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         self.book.delete(name)
         self._save()
@@ -226,7 +226,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.remove_phone(flags["-p"])
         self._save()
@@ -240,7 +240,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.remove_email(flags["-e"])
         self._save()
@@ -254,7 +254,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.remove_address()
         self._save()
@@ -296,7 +296,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.favorite = True
         self._save()
@@ -310,7 +310,7 @@ class ContactHandler:
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
-            raise KeyError
+            raise KeyError("Contact not found")
 
         record.favorite = False
         self._save()
