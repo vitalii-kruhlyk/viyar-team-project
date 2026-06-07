@@ -85,7 +85,7 @@ class CliBot:
                 ("--notes", "Show all notes"),
             ],
             "birthday": [
-                ("--upcoming -n <days>", "Show all contacts with birthday in next N days"),
+                ("--upcoming -days <number>", "Show all contacts with birthday in next N days"),
             ],
             "status": [
                 ("--task -i <id> -s <status>", "Change task status (new, in progress, done, cancelled)"),
