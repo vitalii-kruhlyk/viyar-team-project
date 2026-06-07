@@ -48,7 +48,7 @@ class ContactHandler:
             "add_address": (
                 "Add address: add_address <name> <country> <city> <street> <house>"
             ),
-            "birthday": "Show days until birthday: birthday <name>",
+            "birthday": "Shows contacts who will have a birthday: birthday <number of days>",
             "change": "Change phone: change <name> <old_phone> <new_phone>",
             "change_email": "Change email: change_email <name> <old_email> <new_email>",
             "change_address": (
@@ -68,6 +68,9 @@ class ContactHandler:
             "search_address": (
                 "Search by address: search_address <country> [city] [street] [house]"
             ),
+            "favorite": "Add a contact to favorites",
+            "unfavorite": "Remove contact from favorites",
+            "show_favorites": "Show favorites",
         }
 
     def _save(self) -> None:
