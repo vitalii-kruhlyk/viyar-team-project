@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from handlers.decorators import input_error
 
-class APIHendler:
+class WeatherService:
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
 
     def __init__(self) -> None:
