@@ -87,7 +87,7 @@ class TaskHandler:
         return "\n".join(str(task) for task in results), False
 
     @input_error
-    def task_status(self, flags: dict[str, str]) -> tuple[str, bool]:
+    def set_status(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-i" not in flags or "-s" not in flags:
             raise ValueError("Usage: status --task -i <id> -s <status>")
         if not flags["-i"].isdigit():
@@ -102,7 +102,7 @@ class TaskHandler:
         return f"Task [{task.id}] status changed to '{task.status}'.", False
 
     @input_error
-    def tasks_by_status(self, flags: dict[str, str]) -> tuple[str, bool]:
+    def filter_by_status(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-s" not in flags:
             raise ValueError("Usage: filter --task -s <status>")
 
