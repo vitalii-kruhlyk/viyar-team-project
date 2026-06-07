@@ -19,6 +19,7 @@ class APIHendler:
         city = args[0]
 
         lat, lng = self.get_coordinates(city)
+
         if lng is None:
             return "Unable to retrieve city data", False
 
@@ -27,6 +28,7 @@ class APIHendler:
             f"?latitude={lat}"
             f"&longitude={lng}"
             "&current=temperature_2m,wind_speed_10m"
+            "&hourly=precipitation_probability"
         )
 
         response = requests.get(url, timeout=10)
@@ -36,8 +38,10 @@ class APIHendler:
             data = response.json()
 
             current = data["current"]
+            probability = data["hourly"]["precipitation_probability"][0]
 
-            return f"Temperature: {current['temperature_2m']}°C\nWind speed: {current['wind_speed_10m']} km/h", False
+            return (f"Temperature: {current['temperature_2m']}°C\nWind speed: {current['wind_speed_10m']} km/h"
+                    f"\nProbability of rain: {probability}%"), False
 
         return "Unable to retrieve city data", False
 
@@ -45,14 +49,13 @@ class APIHendler:
     @input_error
     def get_coordinates(city: str) -> list[str]|None:
         url = (
-            "https://geocoding-api.open-meteo.com/v1/search"
-            f"?name={city}&count=1"
+            "https://geocoding-api.open-meteo.com/v1/search"f"?name={city}&count=1"
         )
 
         response = requests.get(url)
         if response.status_code == 200:
             result = response.json()["results"][0]
 
-            return [result.get("lat"), result.get("lng")]
+            return [result.get("latitude"), result.get("longitude")]
 
         return None
