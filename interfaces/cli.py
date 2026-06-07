@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from handlers import ContactHandler, TaskHandler, NoteHandler, WeatherService
+from handlers import ContactHandler, TaskHandler, NoteHandler, WeatherService, CurrencyService
 from storage import JsonStorage
 
 
@@ -9,6 +9,7 @@ class CliBot:
     tasks: TaskHandler
     notes: NoteHandler
     weather: WeatherService
+    currencies: CurrencyService
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
     descriptions: dict[str, str]
 
@@ -17,6 +18,7 @@ class CliBot:
         self.notes = NoteHandler(JsonStorage("notes.json"))
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
+        self.currencies = CurrencyService()
         self.commands = {
             **self.contacts.commands,
             **self.notes.commands,
@@ -25,6 +27,7 @@ class CliBot:
             **self.contacts.commands,
             **self.tasks.commands,
             **self.weather.commands,
+            **self.currencies.commands,
             "exit": self.exit_bot,
         }
         self.descriptions = {
@@ -33,6 +36,7 @@ class CliBot:
             **self.contacts.descriptions,
             **self.tasks.descriptions,
             **self.weather.descriptions,
+            **self.currencies.descriptions,
             "exit": "Exit the bot",
         }
 
