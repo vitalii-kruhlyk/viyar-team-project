@@ -32,7 +32,7 @@ class BotCompleter(Completer):
                 if sub not in subs:
                     subs.append(sub)
 
-                flags = [t for t in tokens[1:] if re.match(r"^-[^-]", t)]
+                flags = [t.lstrip("[") for t in tokens[1:] if re.match(r"^\[?-[^-]", t)]
                 key = (command, sub)
                 if key not in self._flags:
                     self._flags[key] = []
