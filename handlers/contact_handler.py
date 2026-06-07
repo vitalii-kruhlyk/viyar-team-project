@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from handlers.decorators import input_error
 from interfaces.parser import split_values
 from models import AddressBook, Record
@@ -112,22 +114,31 @@ class ContactHandler:
     @input_error
     def birthday(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-n" not in flags:
-            raise ValueError("Usage: birthday --contact -n <name>")
+            raise ValueError("Usage: birthday --upcoming -n <days>")
 
-        name = flags["-n"]
-        record = self.book.find(name)
-        if record is None:
-            raise KeyError
+        if not flags["-n"].isdigit() or int(flags["-n"]) <= 0:
+            raise ValueError("Number of days must be a positive whole number")
 
-        days = record.days_to_birthday()
-        if days is None:
-            text_return = f"Birthday for contact {name} is not set."
-        elif days == 0:
-            text_return = f"Today is {name}'s birthday!"
-        else:
-            text_return = f"{days} day(s) left until {name}'s birthday"
+        number_of_days = int(flags["-n"])
+        day_today = date.today()
+        birthday_date_end = day_today + timedelta(days=number_of_days)
 
-        return text_return, False
+        contacts = []
+        for record in self.book.data.values():
+            if record.birthday is None:
+                continue
+            bday = record.birthday.value
+            contact_birthday = Record._birthday_for_year(bday, day_today.year)
+            if contact_birthday < day_today:
+                contact_birthday = Record._birthday_for_year(bday, day_today.year + 1)
+            if day_today <= contact_birthday <= birthday_date_end:
+                contacts.append(record.name.value)
+
+        if not contacts:
+            return f"No birthdays in the next {number_of_days} day(s).", False
+
+        names = "\n".join(contacts)
+        return f"Birthdays in the next {number_of_days} day(s):\n{names}", False
 
     @input_error
     def change_phone(self, flags: dict[str, str]) -> tuple[str, bool]:
@@ -291,3 +302,39 @@ class ContactHandler:
             return "No contacts found for the given address.", False
 
         return "\n".join(str(record) for record in results), False
+
+    @input_error
+    def add_to_favorites(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-n" not in flags:
+            raise ValueError("Usage: add --favorite -n <name>")
+
+        name = flags["-n"]
+        record = self.book.find(name)
+        if record is None:
+            raise KeyError
+
+        record.favorite = True
+        self._save()
+        return f"{name} added to favorites.", False
+
+    @input_error
+    def remove_from_favorites(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-n" not in flags:
+            raise ValueError("Usage: remove --favorite -n <name>")
+
+        name = flags["-n"]
+        record = self.book.find(name)
+        if record is None:
+            raise KeyError
+
+        record.favorite = False
+        self._save()
+        return f"{name} removed from favorites.", False
+
+    @input_error
+    def show_favorites(self, flags: dict[str, str]) -> tuple[str, bool]:
+        favorites = self.book.get_favorites()
+        if not favorites:
+            return "No favorites saved.", False
+
+        return "\n".join(str(record) for record in favorites), False

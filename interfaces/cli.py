@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from handlers import ContactHandler, TaskHandler
+from handlers import ContactHandler, NoteHandler, TaskHandler
 from interfaces.parser import parse_flags, split_input
 from storage import JsonStorage
 
@@ -8,13 +8,14 @@ from storage import JsonStorage
 class CliBot:
     contacts: ContactHandler
     tasks: TaskHandler
+    notes: NoteHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
 
     def __init__(self) -> None:
         self.contacts = ContactHandler(JsonStorage("contacts.json"))
+        self.notes = NoteHandler(JsonStorage("notes.json"))
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
-
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -38,85 +39,75 @@ class CliBot:
             ],
             "add": [
                 (
-                    "--contact  -n <name> [-p phones] [-e emails] [-b DD.MM.YYYY]",
+                    "--contact  -n <name> [-p phone1,phone2] [-e email1,email2] [-b DD.MM.YYYY]",
                     "Create a new contact",
                 ),
                 ("--phone    -n <name> -p <phone1,phone2>", "Add phone(s) to contact"),
                 ("--email    -n <name> -e <email1,email2>", "Add email(s) to contact"),
                 ("--birthday -n <name> -b <DD.MM.YYYY>", "Set birthday for contact"),
-                (
-                    "--address  -n <name> "
-                    "-country <X> -city <X> -street <X> -house <X>",
-                    "Add address to contact",
-                ),
+                ("--address  -n <name> -country <X> -city <X> -street <X> -house <X>", "Add address to contact"),
+                ("--favorite -n <name>", "Add contact to favorites"),
                 ("--task     -t <title> [-d <description>]", "Create a new task"),
+                ("--note     -t <title> -c <content>", "Create a new note"),
+                ("--tag      -i <id> -t <tag>", "Add tag to a note"),
             ],
             "edit": [
-                (
-                    "--phone     -n <name> -old <phone> -new <phone>",
-                    "Change phone number",
-                ),
+                ("--phone     -n <name> -old <phone> -new <phone>", "Change phone number"),
                 ("--email     -n <name> -old <email> -new <email>", "Change email"),
-                (
-                    "--address   -n <name> "
-                    "-country <X> -city <X> -street <X> -house <X>",
-                    "Change address",
-                ),
+                ("--address   -n <name> -country <X> -city <X> -street <X> -house <X>", "Change address"),
                 ("--task      -i <id> -t <new_title>", "Edit task title"),
                 ("--task-desc -i <id> -d <new_description>", "Edit task description"),
+                ("--note      -i <id> -c <new_content>", "Edit note content"),
             ],
             "remove": [
-                ("--phone   -n <name> -p <phone>", "Remove phone from contact"),
-                ("--email   -n <name> -e <email>", "Remove email from contact"),
-                ("--address -n <name>", "Remove address from contact"),
+                ("--phone    -n <name> -p <phone>", "Remove phone from contact"),
+                ("--email    -n <name> -e <email>", "Remove email from contact"),
+                ("--address  -n <name>", "Remove address from contact"),
+                ("--favorite -n <name>", "Remove contact from favorites"),
+                ("--tag      -i <id> -t <tag>", "Remove tag from note"),
             ],
             "delete": [
                 ("--contact -n <name>", "Delete contact"),
                 ("--task    -i <id>", "Delete task"),
+                ("--note    -i <id>", "Delete note"),
             ],
             "search": [
                 ("--contact -q <query>", "Search contacts by name, phone or email"),
-                (
-                    "--address [-country <X>] [-city <X>] [-street <X>] [-house X]",
-                    "Search contacts by address",
-                ),
+                ("--address [-country <X>] [-city <X>] [-street <X>] [-house <X>]", "Search contacts by address"),
                 ("--task    -q <query>", "Search tasks by title or description"),
+                ("--note    -q <query>", "Search notes by title or content"),
             ],
             "show": [
-                ("--contacts -p <size>", "Show all contacts. Add -page for pagination"),
-                ("--contact  -n <name>", "Show specific contact"),
+                ("--contacts  [-page <size>]", "Show all contacts. Add -page for pagination"),
+                ("--contact   -n <name>", "Show specific contact"),
+                ("--favorites", "Show all favorite contacts"),
                 ("--tasks", "Show all tasks"),
+                ("--notes", "Show all notes"),
             ],
             "birthday": [
-                ("--contact -n <name>", "Show days until contact's birthday"),
+                ("--upcoming -n <days>", "Show all contacts with birthday in next N days"),
             ],
             "status": [
-                (
-                    "--task -i <id> -s <status>",
-                    "Change task status (new, in progress, done, cancelled)",
-                ),
+                ("--task -i <id> -s <status>", "Change task status (new, in progress, done, cancelled)"),
             ],
             "filter": [
                 ("--task -s <status>", "Filter tasks by status"),
+                ("--note -t <tag>", "Filter notes by tag"),
             ],
             "exit": [
                 ("", "Exit the bot"),
             ],
         }
 
-    def parse_command(
-        self, user_input: str
-    ) -> tuple[str | None, str | None, dict[str, str]]:
+    def parse_command(self, user_input: str) -> tuple[str | None, str | None, dict[str, str]]:
         tokens = split_input(user_input.strip())
         if not tokens:
             return None, None, {}
 
         command = tokens[0].lower()
-
         if command not in self.commands:
             return None, None, {}
 
-        # Субкоманда — второй токен начинающийся с "--"
         subcommand = None
         flag_start = 1
         if len(tokens) > 1 and tokens[1].startswith("--"):
@@ -141,6 +132,7 @@ class CliBot:
                 else:
                     lines.append(f"      {description}")
             lines.append("")
+
         return "\n".join(lines), False
 
     def add(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
@@ -154,26 +146,32 @@ class CliBot:
             return self.contacts.add_birthday(flags)
         if sub == "--address":
             return self.contacts.add_address(flags)
+        if sub == "--favorite":
+            return self.contacts.add_to_favorites(flags)
         if sub == "--task":
             return self.tasks.add_task(flags)
+        if sub == "--note":
+            return self.notes.add_note(flags)
+        if sub == "--tag":
+            return self.notes.add_tag(flags)
         raise ValueError(
-            "Usage: add --contact | --phone | --email | --birthday | --address | --task"
+            "Usage: add --contact | --phone | --email | --birthday | --address | --favorite | --task | --note | --tag"
         )
 
     def edit(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--phone":
-            return self.contacts.change_phone(flags)
+            return self.contacts.edit_phone(flags)
         if sub == "--email":
-            return self.contacts.change_email(flags)
+            return self.contacts.edit_email(flags)
         if sub == "--address":
-            return self.contacts.change_address(flags)
+            return self.contacts.edit_address(flags)
         if sub == "--task":
             return self.tasks.edit_task(flags)
         if sub == "--task-desc":
             return self.tasks.edit_task_desc(flags)
-        raise ValueError(
-            "Usage: edit --phone | --email | --address | --task | --task-desc"
-        )
+        if sub == "--note":
+            return self.notes.edit_note(flags)
+        raise ValueError("Usage: edit --phone | --email | --address | --task | --task-desc | --note")
 
     def remove(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--phone":
@@ -182,14 +180,20 @@ class CliBot:
             return self.contacts.remove_email(flags)
         if sub == "--address":
             return self.contacts.remove_address(flags)
-        raise ValueError("Usage: remove --phone | --email | --address")
+        if sub == "--favorite":
+            return self.contacts.remove_from_favorites(flags)
+        if sub == "--tag":
+            return self.notes.remove_tag(flags)
+        raise ValueError("Usage: remove --phone | --email | --address | --favorite | --tag")
 
     def delete(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--contact":
             return self.contacts.delete_contact(flags)
         if sub == "--task":
             return self.tasks.delete_task(flags)
-        raise ValueError("Usage: delete --contact | --task")
+        if sub == "--note":
+            return self.notes.delete_note(flags)
+        raise ValueError("Usage: delete --contact | --task | --note")
 
     def search(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--contact":
@@ -198,31 +202,39 @@ class CliBot:
             return self.contacts.search_address(flags)
         if sub == "--task":
             return self.tasks.search_task(flags)
-        raise ValueError("Usage: search --contact | --address | --task")
+        if sub == "--note":
+            return self.notes.search_note(flags)
+        raise ValueError("Usage: search --contact | --address | --task | --note")
 
     def show(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--contacts":
             return self.contacts.show_all(flags)
         if sub == "--contact":
             return self.contacts.show_one(flags)
+        if sub == "--favorites":
+            return self.contacts.show_favorites(flags)
         if sub == "--tasks":
             return self.tasks.show_tasks(flags)
-        raise ValueError("Usage: show --contacts | --contact | --tasks")
+        if sub == "--notes":
+            return self.notes.show_notes(flags)
+        raise ValueError("Usage: show --contacts | --contact | --favorites | --tasks | --notes")
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
-        if sub == "--contact":
+        if sub == "--upcoming":
             return self.contacts.birthday(flags)
-        raise ValueError("Usage: birthday --contact -n <name>")
+        raise ValueError("Usage: birthday --upcoming -n <days>")
 
     def status(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--task":
-            return self.tasks.task_status(flags)
+            return self.tasks.set_status(flags)
         raise ValueError("Usage: status --task -i <id> -s <status>")
 
     def filter(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--task":
-            return self.tasks.tasks_by_status(flags)
-        raise ValueError("Usage: filter --task -s <status>")
+            return self.tasks.filter_by_status(flags)
+        if sub == "--note":
+            return self.notes.filter_by_tag(flags)
+        raise ValueError("Usage: filter --task | --note")
 
     @staticmethod
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
@@ -230,10 +242,8 @@ class CliBot:
 
     def run(self) -> None:
         print("Bot started. Type 'hello' to begin.")
-
         while True:
             user_input = input("Enter a command: ")
-
             if not user_input.strip():
                 continue
 
