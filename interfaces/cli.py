@@ -8,7 +8,7 @@ class CliBot:
     contacts: ContactHandler
     tasks: TaskHandler
     notes: NoteHandler
-    api: WeatherService
+    weather: WeatherService
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
     descriptions: dict[str, str]
 
@@ -16,7 +16,7 @@ class CliBot:
         self.contacts = ContactHandler(JsonStorage("contacts.json"))
         self.notes = NoteHandler(JsonStorage("notes.json"))
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
-        self.api = WeatherService()
+        self.weather = WeatherService()
         self.commands = {
             **self.contacts.commands,
             **self.notes.commands,
@@ -24,7 +24,7 @@ class CliBot:
             "help": self.help,
             **self.contacts.commands,
             **self.tasks.commands,
-            **self.api.commands,
+            **self.weather.commands,
             "exit": self.exit_bot,
         }
         self.descriptions = {
@@ -32,6 +32,7 @@ class CliBot:
             "help": "Show all available commands with descriptions",
             **self.contacts.descriptions,
             **self.tasks.descriptions,
+            **self.weather.descriptions,
             "exit": "Exit the bot",
         }
 
