@@ -118,6 +118,7 @@ class CliBot:
             "-s": "status: new | in progress | done | cancelled",
             "-old": "old value",
             "-new": "new value",
+            "-days": "number of days",
             "-page": "page size",
             "-country": "country",
             "-city": "city",
@@ -248,7 +249,7 @@ class CliBot:
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":
             return self.contacts.birthday(flags)
-        raise ValueError("Usage: birthday --upcoming -n <days>")
+        raise ValueError("Usage: birthday --upcoming -days <number>")
 
     def status(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--task":
