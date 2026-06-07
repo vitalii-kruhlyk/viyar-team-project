@@ -2,7 +2,6 @@ import shlex
 
 
 def _is_flag(token: str) -> bool:
-    """Returns True if token is a flag (starts with - but is not a negative number)."""
     if not token.startswith("-"):
         return False
     rest = token[1:]
