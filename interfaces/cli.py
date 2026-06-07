@@ -1,6 +1,10 @@
 from collections.abc import Callable
 
+from prompt_toolkit import PromptSession
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+
 from handlers import ContactHandler, NoteHandler, TaskHandler
+from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
 from storage import JsonStorage
 
@@ -11,6 +15,7 @@ class CliBot:
     notes: NoteHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
+    flag_descriptions: dict[str, str]
 
     def __init__(self) -> None:
         self.contacts = ContactHandler(JsonStorage("contacts.json"))
@@ -30,6 +35,7 @@ class CliBot:
             "filter": self.filter,
             "exit": self.exit_bot,
         }
+
         self.descriptions = {
             "hello": [
                 ("", "Greet the bot"),
@@ -97,6 +103,26 @@ class CliBot:
             "exit": [
                 ("", "Exit the bot"),
             ],
+        }
+
+        self.flag_descriptions = {
+            "-n": "contact name",
+            "-p": "phone number(s), comma-separated",
+            "-e": "email(s), comma-separated",
+            "-b": "birthday in DD.MM.YYYY",
+            "-t": "title / tag",
+            "-c": "content",
+            "-d": "description",
+            "-i": "id",
+            "-q": "search query",
+            "-s": "status: new | in progress | done | cancelled",
+            "-old": "old value",
+            "-new": "new value",
+            "-page": "page size",
+            "-country": "country",
+            "-city": "city",
+            "-street": "street",
+            "-house": "house number",
         }
 
     def parse_command(self, user_input: str) -> tuple[str | None, str | None, dict[str, str]]:
@@ -241,9 +267,28 @@ class CliBot:
         return "Good bye!", True
 
     def run(self) -> None:
+        try:
+            session: PromptSession = PromptSession(
+                completer=BotCompleter(self.descriptions, self.flag_descriptions),
+                auto_suggest=AutoSuggestFromHistory(),
+            )
+
+            def prompt() -> str:
+                return session.prompt("Enter a command: ")
+
+        except Exception:
+            # Fallback for environments without a real console (e.g. PyCharm run)
+            def prompt() -> str:  # type: ignore[misc]
+                return input("Enter a command: ")
+
         print("Bot started. Type 'hello' to begin.")
         while True:
-            user_input = input("Enter a command: ")
+            try:
+                user_input = prompt()
+            except (EOFError, KeyboardInterrupt):
+                print("Good bye!")
+                break
+
             if not user_input.strip():
                 continue
 
