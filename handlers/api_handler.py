@@ -86,7 +86,7 @@ class CurrencyService:
         if response.status_code == 200:
 
             rates = response.json()
-
+            currency_info = ""
             for currency in self.currencies:
 
                 rate = next(
@@ -97,10 +97,10 @@ class CurrencyService:
                 if rate is None:
                     return f"Currency {currency} not found", False
 
-                return (
-                    f"{rate['cc']}\n"
-                    f"Rate: {rate['rate']} UAH\n"
-                    f"Date: {rate['exchangedate']}"
-                ), False
+                currency_info =  f"{rate['cc']}\n"
+                f"Rate: {rate['rate']} UAH\n"
+                f"Date: {rate['exchangedate']}"
+
+            return currency_info, False
 
         return "Unable to retrieve currency data", False
