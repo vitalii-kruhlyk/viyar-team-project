@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from handlers import ContactHandler, TaskHandler, NoteHandler
+from handlers import ContactHandler, TaskHandler, NoteHandler, APIHendler
 from storage import JsonStorage
 
 
@@ -8,6 +8,7 @@ class CliBot:
     contacts: ContactHandler
     tasks: TaskHandler
     notes: NoteHandler
+    api: APIHendler
     commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
     descriptions: dict[str, str]
 
@@ -15,6 +16,7 @@ class CliBot:
         self.contacts = ContactHandler(JsonStorage("contacts.json"))
         self.notes = NoteHandler(JsonStorage("notes.json"))
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
+        self.api = APIHendler()
         self.commands = {
             **self.contacts.commands,
             **self.notes.commands,
@@ -22,6 +24,7 @@ class CliBot:
             "help": self.help,
             **self.contacts.commands,
             **self.tasks.commands,
+            **self.api.commands,
             "exit": self.exit_bot,
         }
         self.descriptions = {
