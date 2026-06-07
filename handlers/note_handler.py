@@ -18,7 +18,7 @@ class NoteHandler:
         note_id = int(id_str)
         note = self.book.get(note_id)
         if note is None:
-            raise KeyError(note_id)
+            raise KeyError("Note not found")
         return note
 
     @input_error

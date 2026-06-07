@@ -155,14 +155,12 @@ class Record:
 
     def add_address(self, country: str, city: str, street: str, house: str) -> None:
         if self.address is not None:
-            raise ValueError(
-                f"Address already exists for contact {self.name.value}. " "Use change_address to update it."
-            )
+            raise ValueError(f"Address already exists for contact {self.name.value}")
         self.address = Address(country, city, street, house)
 
     def change_address(self, country: str, city: str, street: str, house: str) -> None:
         if self.address is None:
-            raise ValueError(f"No address set for contact {self.name.value}. " "Use add_address to add one.")
+            raise ValueError(f"No address set for contact {self.name.value}")
         self.address = Address(country, city, street, house)
 
     def remove_address(self) -> None:

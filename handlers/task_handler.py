@@ -32,7 +32,7 @@ class TaskHandler:
 
         task = self.book.find(int(flags["-i"]))
         if task is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
         task.edit_title(flags["-t"])
         self._save()
@@ -42,10 +42,12 @@ class TaskHandler:
     def edit_task_desc(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-i" not in flags or "-d" not in flags:
             raise ValueError("Usage: edit --task-desc -i <id> -d <new_description>")
+        if not flags["-i"].isdigit():
+            raise ValueError("Task id must be a positive number")
 
         task = self.book.find(int(flags["-i"]))
         if task is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
         task.edit_description(flags["-d"])
         self._save()
@@ -60,7 +62,7 @@ class TaskHandler:
 
         task_id = int(flags["-i"])
         if self.book.find(task_id) is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
         self.book.delete(task_id)
         self._save()
@@ -95,7 +97,7 @@ class TaskHandler:
 
         task = self.book.find(int(flags["-i"]))
         if task is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
         task.status = TaskStatus.from_str(flags["-s"])
         self._save()
