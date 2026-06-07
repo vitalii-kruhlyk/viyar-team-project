@@ -82,25 +82,28 @@ class CurrencyService:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
 
-        response = requests.get(url)
         if response.status_code == 200:
 
             rates = response.json()
-            currency_info = ""
+            currency_info = []
+
             for currency in self.currencies:
 
                 rate = next(
                     (item for item in rates if item["cc"] == currency),
                     None
-                    )
+                )
 
                 if rate is None:
-                    return f"Currency {currency} not found", False
+                    currency_info.append(f"{currency}: not found")
+                    continue
 
-                currency_info =  f"{rate['cc']}\n"
-                f"Rate: {rate['rate']} UAH\n"
-                f"Date: {rate['exchangedate']}"
+                currency_info.append(
+                    f"{rate['cc']}: "
+                    f"{rate['rate']} UAH "
+                    f"({rate['exchangedate']})"
+                )
 
-            return currency_info, False
+            return "\n".join(currency_info), False
 
         return "Unable to retrieve currency data", False
