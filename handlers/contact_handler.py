@@ -22,9 +22,7 @@ class ContactHandler:
     @input_error
     def add_contact(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-n" not in flags:
-            raise ValueError(
-                "Usage: add --contact -n <name> [-p phones] [-e emails] [-b DD.MM.YYYY]"
-            )
+            raise ValueError("Usage: add --contact -n <name> [-p phones] [-e emails] [-b DD.MM.YYYY]")
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
@@ -95,19 +93,14 @@ class ContactHandler:
     def add_address(self, flags: dict[str, str]) -> tuple[str, bool]:
         required = {"-n", "-country", "-city", "-street", "-house"}
         if not required.issubset(flags):
-            raise ValueError(
-                "Usage: add --address -n <name> "
-                "-country <X> -city <X> -street <X> -house <X>"
-            )
+            raise ValueError("Usage: add --address -n <name> " "-country <X> -city <X> -street <X> -house <X>")
 
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
             raise KeyError
 
-        record.add_address(
-            flags["-country"], flags["-city"], flags["-street"], flags["-house"]
-        )
+        record.add_address(flags["-country"], flags["-city"], flags["-street"], flags["-house"])
         self._save()
         return f"Address added to {name}.", False
 
@@ -141,7 +134,7 @@ class ContactHandler:
         return f"Birthdays in the next {number_of_days} day(s):\n{names}", False
 
     @input_error
-    def change_phone(self, flags: dict[str, str]) -> tuple[str, bool]:
+    def edit_phone(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-n" not in flags or "-old" not in flags or "-new" not in flags:
             raise ValueError("Usage: edit --phone -n <name> -old <phone> -new <phone>")
 
@@ -155,7 +148,7 @@ class ContactHandler:
         return f"Phone updated for '{name}'", False
 
     @input_error
-    def change_email(self, flags: dict[str, str]) -> tuple[str, bool]:
+    def edit_email(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-n" not in flags or "-old" not in flags or "-new" not in flags:
             raise ValueError("Usage: edit --email -n <name> -old <email> -new <email>")
 
@@ -169,22 +162,17 @@ class ContactHandler:
         return f"Email updated for {name}.", False
 
     @input_error
-    def change_address(self, flags: dict[str, str]) -> tuple[str, bool]:
+    def edit_address(self, flags: dict[str, str]) -> tuple[str, bool]:
         required = {"-n", "-country", "-city", "-street", "-house"}
         if not required.issubset(flags):
-            raise ValueError(
-                "Usage: edit --address -n <name> "
-                "-country <X> -city <X> -street <X> -house <X>"
-            )
+            raise ValueError("Usage: edit --address -n <name> " "-country <X> -city <X> -street <X> -house <X>")
 
         name = flags["-n"]
         record = self.book.find(name)
         if record is None:
             raise KeyError
 
-        record.change_address(
-            flags["-country"], flags["-city"], flags["-street"], flags["-house"]
-        )
+        record.change_address(flags["-country"], flags["-city"], flags["-street"], flags["-house"])
         self._save()
         return f"Address updated for contact {name}.", False
 
@@ -287,10 +275,7 @@ class ContactHandler:
     @input_error
     def search_address(self, flags: dict[str, str]) -> tuple[str, bool]:
         if not any(f in flags for f in ("-country", "-city", "-street", "-house")):
-            raise ValueError(
-                "Usage: search --address "
-                "[-country <X>] [-city <X>] [-street <X>] [-house <X>]"
-            )
+            raise ValueError("Usage: search --address " "[-country <X>] [-city <X>] [-street <X>] [-house <X>]")
 
         results = self.book.search_by_address(
             country=flags.get("-country"),
