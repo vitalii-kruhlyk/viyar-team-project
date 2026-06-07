@@ -12,6 +12,7 @@ class WeatherService:
         }
         self.descriptions = {
             "weather": "Receives weather data for the city : weather <City>"
+        }
 
     @input_error
     def get_weather(self, args: list[str]) -> tuple[str, bool]:
