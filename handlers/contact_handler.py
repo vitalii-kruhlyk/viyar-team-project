@@ -181,10 +181,10 @@ class ContactHandler:
         if not self.book.data:
             return "No contacts saved.", False
 
-        if "-p" in flags:
-            if not flags["-p"].isdigit() or int(flags["-p"]) == 0:
+        if "-page" in flags:
+            if not flags["-page"].isdigit() or int(flags["-page"]) == 0:
                 raise ValueError("Page size must be a positive whole number")
-            page_size = int(flags["-p"])
+            page_size = int(flags["-page"])
             pages = []
             for index, chunk in enumerate(self.book.iterator(page_size), start=1):
                 page_text = "\n".join(str(record) for record in chunk)
