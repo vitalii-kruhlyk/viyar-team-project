@@ -25,9 +25,9 @@ class ContactHandler:
             raise ValueError("Usage: add --contact -n <name> [-p phones] [-e emails] [-b DD.MM.YYYY]")
         name = flags["-n"]
         record = self.book.find(name)
-        if record is None:
+        is_new = record is None
+        if is_new:
             record = Record(name)
-            self.book.add_record(record)
 
         if "-p" in flags:
             for phone in split_values(flags["-p"]):
@@ -40,6 +40,8 @@ class ContactHandler:
         if "-b" in flags:
             record.add_birthday(flags["-b"])
 
+        if is_new:
+            self.book.add_record(record)
         self._save()
         return f"Contact {name} added.", False
 
