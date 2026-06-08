@@ -7,7 +7,8 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except KeyError as e:
-            return str(e) if str(e) else "Not found", False
+            msg = e.args[0] if e.args else "Not found"
+            return str(msg) if msg else "Not found", False
         except ValueError as error:
             return str(error), False
         except IndexError:
