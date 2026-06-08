@@ -181,8 +181,9 @@ class CliBot:
             return self.notes.add_note(flags)
         if sub == "--tag":
             return self.notes.add_tag(flags)
-        raise ValueError(
-            "Usage: add --contact | --phone | --email | --birthday | --address | --favorite | --task | --note | --tag"
+        return (
+            "Usage: add --contact | --phone | --email | --birthday | --address | --favorite | --task | --note | --tag",
+            False,
         )
 
     def edit(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
@@ -198,7 +199,7 @@ class CliBot:
             return self.tasks.edit_task_desc(flags)
         if sub == "--note":
             return self.notes.edit_note(flags)
-        raise ValueError("Usage: edit --phone | --email | --address | --task | --task-desc | --note")
+        return "Usage: edit --phone | --email | --address | --task | --task-desc | --note", False
 
     def remove(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--phone":
@@ -211,7 +212,7 @@ class CliBot:
             return self.contacts.remove_from_favorites(flags)
         if sub == "--tag":
             return self.notes.remove_tag(flags)
-        raise ValueError("Usage: remove --phone | --email | --address | --favorite | --tag")
+        return "Usage: remove --phone | --email | --address | --favorite | --tag", False
 
     def delete(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--contact":
@@ -220,7 +221,7 @@ class CliBot:
             return self.tasks.delete_task(flags)
         if sub == "--note":
             return self.notes.delete_note(flags)
-        raise ValueError("Usage: delete --contact | --task | --note")
+        return "Usage: delete --contact | --task | --note", False
 
     def search(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--contact":
@@ -231,7 +232,7 @@ class CliBot:
             return self.tasks.search_task(flags)
         if sub == "--note":
             return self.notes.search_note(flags)
-        raise ValueError("Usage: search --contact | --address | --task | --note")
+        return "Usage: search --contact | --address | --task | --note", False
 
     def show(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--contacts":
@@ -244,24 +245,24 @@ class CliBot:
             return self.tasks.show_tasks(flags)
         if sub == "--notes":
             return self.notes.show_notes(flags)
-        raise ValueError("Usage: show --contacts | --contact | --favorites | --tasks | --notes")
+        return "Usage: show --contacts | --contact | --favorites | --tasks | --notes", False
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":
             return self.contacts.birthday(flags)
-        raise ValueError("Usage: birthday --upcoming -days <number>")
+        return "Usage: birthday --upcoming -days <number>", False
 
     def status(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--task":
             return self.tasks.set_status(flags)
-        raise ValueError("Usage: status --task -i <id> -s <status>")
+        return "Usage: status --task -i <id> -s <status>", False
 
     def filter(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--task":
             return self.tasks.filter_by_status(flags)
         if sub == "--note":
             return self.notes.filter_by_tag(flags)
-        raise ValueError("Usage: filter --task | --note")
+        return "Usage: filter --task | --note", False
 
     @staticmethod
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
@@ -277,9 +278,9 @@ class CliBot:
             def prompt() -> str:
                 return session.prompt("Enter a command: ")
 
-        except Exception:
-            # Fallback for environments without a real console (e.g. PyCharm run)
-            def prompt() -> str:  # type: ignore[misc]
+        except (OSError, RuntimeError):
+
+            def prompt() -> str:
                 return input("Enter a command: ")
 
         print("Bot started. Type 'hello' to begin.")

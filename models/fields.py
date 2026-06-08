@@ -40,9 +40,7 @@ class Phone(Field):
         try:
             parsed = phonenumbers.parse(value)
         except NumberParseException:
-            raise ValueError(
-                "Phone number must be in international format, e.g. +380501234567"
-            )
+            raise ValueError("Phone number must be in international format, e.g. +380501234567")
         if not phonenumbers.is_valid_number(parsed):
             raise ValueError("Phone number is not valid, e.g. +380501234567")
         return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
@@ -60,6 +58,14 @@ class Email(Field):
 
 
 class Birthday(Field):
+    @property
+    def value(self) -> date:
+        return self._value
+
+    @value.setter
+    def value(self, new_value: str) -> None:
+        self._value = self.validate(new_value)
+
     def __str__(self) -> str:
         return self._value.strftime("%d.%m.%Y")
 

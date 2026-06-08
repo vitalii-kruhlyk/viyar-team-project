@@ -12,5 +12,7 @@ def input_error(func):
             return str(error), False
         except IndexError:
             return "Enter user name", False
+        except AttributeError as error:
+            return str(error), False
 
     return wrapper
