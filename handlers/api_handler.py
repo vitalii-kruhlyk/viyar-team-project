@@ -1,25 +1,16 @@
 import requests
-from collections.abc import Callable
 
 from handlers.decorators import input_error
 
 class WeatherService:
-    commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
-
-    def __init__(self) -> None:
-        self.commands = {
-            "weather": self.get_weather
-        }
-        self.descriptions = {
-            "weather": "Receives weather data for the city : weather <City>"
-        }
 
     @input_error
-    def get_weather(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
-            raise ValueError("Usage: weather <City>")
+    def get_weather(self, flags: dict[str, str]) -> tuple[str, bool]:
 
-        city = args[0]
+        if "-city" not in flags:
+            raise ValueError("Usage: show --weather <City>")
+
+        city = flags["-city"]
 
         lat, lng = self.get_coordinates(city)
 
@@ -64,19 +55,13 @@ class WeatherService:
         return None
 
 class CurrencyService:
-    commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
 
     def __init__(self) -> None:
-        self.commands = {
-            "currencies": self.get_currency_rate
-        }
-        self.descriptions = {
-            "currencies": "Gets the exchange rate for today"
-        }
+
         self.currencies = ["USD", "EUR", "PLN"]
 
     @input_error
-    def get_currency_rate(self, args: list[str]) -> tuple[str, bool]:
+    def get_currency_rate(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         url = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json"
         response = requests.get(url, timeout=10)
