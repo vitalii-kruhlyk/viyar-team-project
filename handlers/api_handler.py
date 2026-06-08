@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import RequestException
 
 from handlers.decorators import input_error
 
@@ -8,14 +9,16 @@ class WeatherService:
     def get_weather(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         if "-city" not in flags:
-            raise ValueError("Usage: show --weather <City>")
+            raise ValueError("Usage: show --weather -city <City>")
 
         city = flags["-city"]
 
-        lat, lng = self.get_coordinates(city)
+        coordinates = self.get_coordinates(city)
 
-        if lng is None:
+        if coordinates is None:
             return "Unable to retrieve city data", False
+
+        lat, lng = coordinates
 
         url = (
             "https://api.open-meteo.com/v1/forecast"
@@ -25,8 +28,8 @@ class WeatherService:
             "&hourly=precipitation_probability"
         )
 
-        response = requests.get(url, timeout=10)
-        if response.status_code == 200:
+        try:
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
 
             data = response.json()
@@ -36,23 +39,29 @@ class WeatherService:
 
             return (f"Temperature: {current['temperature_2m']}°C\nWind speed: {current['wind_speed_10m']} km/h"
                     f"\nProbability of rain: {probability}%"), False
+        except RequestException:
+            return "Unable to retrieve weather data", False
 
-        return "Unable to retrieve city data", False
 
     @staticmethod
     @input_error
-    def get_coordinates(city: str) -> list[str]|None:
+    def get_coordinates(city: str) -> tuple[str, str]|None:
         url = (
-            "https://geocoding-api.open-meteo.com/v1/search"f"?name={city}&count=1"
+            "https://geocoding-api.open-meteo.com/v1/search"
         )
 
-        response = requests.get(url)
-        if response.status_code == 200:
-            result = response.json()["results"][0]
+        try:
+            response = requests.get(url, params={"name": city, "count": 1}, timeout=10)
+            response.raise_for_status()
 
-            return [result.get("latitude"), result.get("longitude")]
+            results = response.json().get("results")
+            if not results:
+                return None
+            result = results[0]
 
-        return None
+            return result["latitude"], result["longitude"]
+        except RequestException:
+            return None
 
 class CurrencyService:
 
@@ -64,10 +73,10 @@ class CurrencyService:
     def get_currency_rate(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         url = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
 
-        if response.status_code == 200:
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
 
             rates = response.json()
             currency_info = []
@@ -90,5 +99,5 @@ class CurrencyService:
                 )
 
             return "\n".join(currency_info), False
-
-        return "Unable to retrieve currency data", False
+        except RequestException:
+            return "Unable to retrieve currency data", False
