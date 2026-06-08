@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from handlers.decorators import input_error
 from models import TaskBook, TaskStatus
 from storage import JsonStorage
@@ -8,108 +6,70 @@ from storage import JsonStorage
 class TaskHandler:
     storage: JsonStorage
     book: TaskBook
-    commands: dict[str, Callable[[list[str]], tuple[str, bool]]]
-    descriptions: dict[str, str]
 
     def __init__(self, storage: JsonStorage) -> None:
         self.storage = storage
         self.book = TaskBook.from_list(storage.load())
-        self.commands = {
-            "task_add": self.add_task,
-            "task_edit": self.edit_task,
-            "task_edit_desc": self.edit_task_desc,
-            "task_delete": self.delete_task,
-            "task_show": self.show_tasks,
-            "task_search": self.search_task,
-            "task_status": self.task_status,
-            "task_by_status": self.tasks_by_status,
-        }
-        self.descriptions = {
-            "task_add": "Create a new task: task_add <title>",
-            "task_edit": "Edit task title: task_edit <id> <new_title>",
-            "task_edit_desc": (
-                "Edit task description: task_edit_desc <id> <new_description>"
-            ),
-            "task_delete": "Delete a task: task_delete <id>",
-            "task_show": "Show all tasks",
-            "task_search": "Search tasks by title or description: task_search <query>",
-            "task_status": (
-                "Change task status: task_status <id> <status>"
-                "  (new, in_progress, done, cancelled)"
-            ),
-            "task_by_status": "Filter tasks by status: task_by_status <status>",
-        }
 
     def _save(self) -> None:
         self.storage.save(self.book.to_list())
 
     @input_error
-    def add_task(self, args: list[str]) -> tuple[str, bool]:
-        if not args:
-            raise ValueError("Usage: task_add <title>")
+    def add_task(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-t" not in flags:
+            raise ValueError("Usage: add --task -t <title> [-d <description>]")
 
-        title = " ".join(args)
-        task = self.book.add_task(title)
+        task = self.book.add_task(flags["-t"], flags.get("-d"))
         self._save()
         return f"Task [{task.id}] '{task.title}' created.", False
 
     @input_error
-    def edit_task(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) < 2:
-            raise ValueError("Usage: task_edit <id> <new_title>")
-
-        if not args[0].isdigit():
+    def edit_task(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags or "-t" not in flags:
+            raise ValueError("Usage: edit --task -i <id> -t <new_title>")
+        if not flags["-i"].isdigit():
             raise ValueError("Task id must be a positive number")
 
-        task_id = int(args[0])
-        new_title = " ".join(args[1:])
-
-        task = self.book.find(task_id)
+        task = self.book.find(int(flags["-i"]))
         if task is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
-        task.edit_title(new_title)
+        task.edit_title(flags["-t"])
         self._save()
-        return f"Task [{task_id}] title updated to '{task.title}'.", False
+        return f"Task [{task.id}] title updated to '{task.title}'.", False
 
     @input_error
-    def edit_task_desc(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) < 2:
-            raise ValueError("Usage: task_edit_desc <id> <new_description>")
-
-        if not args[0].isdigit():
+    def edit_task_desc(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags or "-d" not in flags:
+            raise ValueError("Usage: edit --task-desc -i <id> -d <new_description>")
+        if not flags["-i"].isdigit():
             raise ValueError("Task id must be a positive number")
 
-        task_id = int(args[0])
-        new_desc = " ".join(args[1:])
-
-        task = self.book.find(task_id)
+        task = self.book.find(int(flags["-i"]))
         if task is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
-        task.edit_description(new_desc)
+        task.edit_description(flags["-d"])
         self._save()
-        return f"Task [{task_id}] description updated.", False
+        return f"Task [{task.id}] description updated.", False
 
     @input_error
-    def delete_task(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) != 1:
-            raise ValueError("Usage: task_delete <id>")
-
-        if not args[0].isdigit():
+    def delete_task(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags:
+            raise ValueError("Usage: delete --task -i <id>")
+        if not flags["-i"].isdigit():
             raise ValueError("Task id must be a positive number")
 
-        task_id = int(args[0])
-
+        task_id = int(flags["-i"])
         if self.book.find(task_id) is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
         self.book.delete(task_id)
         self._save()
         return f"Task [{task_id}] deleted.", False
 
     @input_error
-    def show_tasks(self, _args: list[str]) -> tuple[str, bool]:
+    def show_tasks(self, _flags: dict[str, str]) -> tuple[str, bool]:
         tasks = self.book.all_tasks()
         if not tasks:
             return "No tasks found.", False
@@ -117,11 +77,11 @@ class TaskHandler:
         return "\n".join(str(task) for task in tasks), False
 
     @input_error
-    def search_task(self, args: list[str]) -> tuple[str, bool]:
-        if not args:
-            raise ValueError("Usage: task_search <query>")
+    def search_task(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-q" not in flags:
+            raise ValueError("Usage: search --task -q <query>")
 
-        query = " ".join(args)
+        query = flags["-q"]
         results = self.book.search(query)
         if not results:
             return f"No tasks found for query: {query}", False
@@ -129,32 +89,27 @@ class TaskHandler:
         return "\n".join(str(task) for task in results), False
 
     @input_error
-    def task_status(self, args: list[str]) -> tuple[str, bool]:
-        if len(args) < 2:
-            raise ValueError("Usage: task_status <id> <status>")
-
-        if not args[0].isdigit():
+    def set_status(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags or "-s" not in flags:
+            raise ValueError("Usage: status --task -i <id> -s <status>")
+        if not flags["-i"].isdigit():
             raise ValueError("Task id must be a positive number")
 
-        task_id = int(args[0])
-        new_status = TaskStatus.from_str(" ".join(args[1:]))
-
-        task = self.book.find(task_id)
+        task = self.book.find(int(flags["-i"]))
         if task is None:
-            raise KeyError
+            raise KeyError("Task not found")
 
-        task.status = new_status
+        task.status = TaskStatus.from_str(flags["-s"])
         self._save()
-        return f"Task [{task_id}] status changed to '{new_status}'.", False
+        return f"Task [{task.id}] status changed to '{task.status}'.", False
 
     @input_error
-    def tasks_by_status(self, args: list[str]) -> tuple[str, bool]:
-        if not args:
-            raise ValueError("Usage: task_by_status <status>")
+    def filter_by_status(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-s" not in flags:
+            raise ValueError("Usage: filter --task -s <status>")
 
-        status = TaskStatus.from_str(" ".join(args))
+        status = TaskStatus.from_str(flags["-s"])
         results = self.book.filter_by_status(status)
-
         if not results:
             return f"No tasks with status '{status}'.", False
 

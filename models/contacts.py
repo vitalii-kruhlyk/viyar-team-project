@@ -11,12 +11,8 @@ class Address:
     house: str
 
     def __init__(self, country: str, city: str, street: str, house: str) -> None:
-        if not all(
-            isinstance(v, str) and v.strip() for v in [country, city, street, house]
-        ):
-            raise ValueError(
-                "All address fields (country, city, street, house) must be non-empty"
-            )
+        if not all(isinstance(v, str) and v.strip() for v in [country, city, street, house]):
+            raise ValueError("All address fields (country, city, street, house) must be non-empty")
         self.country = country.strip()
         self.city = city.strip()
         self.street = street.strip()
@@ -79,7 +75,7 @@ class Record:
     def __str__(self) -> str:
         phones = "; ".join(p.value for p in self.phones)
         emails = "; ".join(e.value for e in self.emails)
-        mark = "*" if self.favorite else ""
+        mark = "* " if self.favorite else ""
         parts = [f"Contact name: {mark}{self.name.value}", f"phones: {phones}"]
         if emails:
             parts.append(f"emails: {emails}")
@@ -90,11 +86,11 @@ class Record:
         return ", ".join(parts)
 
     @property
-    def favorite(self):
+    def favorite(self) -> bool:
         return self._favorite
 
     @favorite.setter
-    def favorite(self, value) -> None:
+    def favorite(self, value: bool) -> None:
         self._favorite = value
 
     def find_phone(self, phone: str) -> Phone | None:
@@ -109,30 +105,22 @@ class Record:
 
     def add_phone(self, phone: str) -> None:
         if self.find_phone(phone) is not None:
-            raise ValueError(
-                f"Phone number {phone} already exists for contact {self.name.value}"
-            )
+            raise ValueError(f"Phone number {phone} already exists for contact {self.name.value}")
         self.phones.append(Phone(phone))
 
     def remove_phone(self, phone: str) -> None:
         phone_obj = self.find_phone(phone)
         if phone_obj is None:
-            raise ValueError(
-                f"Phone number {phone} not found for contact {self.name.value}"
-            )
+            raise ValueError(f"Phone number {phone} not found for contact {self.name.value}")
         self.phones.remove(phone_obj)
 
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
         old_phone_obj = self.find_phone(old_phone)
         if old_phone_obj is None:
-            raise ValueError(
-                f"Phone number {old_phone} not found for contact {self.name.value}"
-            )
+            raise ValueError(f"Phone number {old_phone} not found for contact {self.name.value}")
         new_phone_obj = self.find_phone(new_phone)
         if new_phone_obj is not None and new_phone_obj != old_phone_obj:
-            raise ValueError(
-                f"Phone {new_phone} already exists for contact {self.name.value}"
-            )
+            raise ValueError(f"Phone {new_phone} already exists for contact {self.name.value}")
         old_phone_obj.value = new_phone
 
     def find_email(self, email: str) -> Email | None:
@@ -147,9 +135,7 @@ class Record:
 
     def add_email(self, email: str) -> None:
         if self.find_email(email) is not None:
-            raise ValueError(
-                f"Email {email} already exists for contact {self.name.value}"
-            )
+            raise ValueError(f"Email {email} already exists for contact {self.name.value}")
         self.emails.append(Email(email))
 
     def remove_email(self, email: str) -> None:
@@ -161,30 +147,20 @@ class Record:
     def edit_email(self, old_email: str, new_email: str) -> None:
         old_email_obj = self.find_email(old_email)
         if old_email_obj is None:
-            raise ValueError(
-                f"Email {old_email} not found for contact {self.name.value}"
-            )
+            raise ValueError(f"Email {old_email} not found for contact {self.name.value}")
         new_email_obj = self.find_email(new_email)
         if new_email_obj is not None and new_email_obj != old_email_obj:
-            raise ValueError(
-                f"Email {new_email} already exists for contact {self.name.value}"
-            )
+            raise ValueError(f"Email {new_email} already exists for contact {self.name.value}")
         old_email_obj.value = new_email
 
     def add_address(self, country: str, city: str, street: str, house: str) -> None:
         if self.address is not None:
-            raise ValueError(
-                f"Address already exists for contact {self.name.value}. "
-                "Use change_address to update it."
-            )
+            raise ValueError(f"Address already exists for contact {self.name.value}")
         self.address = Address(country, city, street, house)
 
     def change_address(self, country: str, city: str, street: str, house: str) -> None:
         if self.address is None:
-            raise ValueError(
-                f"No address set for contact {self.name.value}. "
-                "Use add_address to add one."
-            )
+            raise ValueError(f"No address set for contact {self.name.value}")
         self.address = Address(country, city, street, house)
 
     def remove_address(self) -> None:
@@ -214,7 +190,7 @@ class Record:
             result["birthday"] = self.birthday.value.isoformat()
         if self.address is not None:
             result["address"] = self.address.to_dict()
-        if self.favorite is not None:
+        if self.favorite:
             result["favorite"] = self.favorite
         return result
 
@@ -289,11 +265,9 @@ class AddressBook(UserDict[str, Record]):
     ) -> list[Record]:
         results = []
         for record in self.data.values():
-            if record.address is not None and record.address.matches(
-                country, city, street, house
-            ):
+            if record.address is not None and record.address.matches(country, city, street, house):
                 results.append(record)
         return results
 
-    def get_favorites(self):
+    def get_favorites(self) -> list[Record]:
         return [record for record in self.data.values() if record.favorite]
