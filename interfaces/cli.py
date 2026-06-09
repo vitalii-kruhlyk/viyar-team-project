@@ -38,7 +38,7 @@ class CliBot:
             "birthday": self.birthday,
             "status": self.status,
             "filter": self.filter,
-            "file": self.file,
+            "file": self.js_file,
             "exit": self.exit_bot,
         }
 
