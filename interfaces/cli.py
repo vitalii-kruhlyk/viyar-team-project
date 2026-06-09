@@ -62,6 +62,7 @@ BOT_STYLE = Style.from_dict(
         "info": "#888888",
         "prompt": "#888888",
         "title": "bold #ffffff",
+        "bye": "bold #ffaa00",
     }
 )
 
@@ -348,6 +349,9 @@ class CliBot:
 
     @staticmethod
     def _print(message: str, style: str = "success") -> None:
+        if message == "Good bye!":
+            print_formatted_text(HTML("<bye>Good bye!</bye>"), style=BOT_STYLE)
+            return
         is_error = any(
             message.lower().startswith(prefix) for prefix in ("error", "not found", "usage:", "input error", "no ")
         )
@@ -378,7 +382,7 @@ class CliBot:
             try:
                 user_input = prompt()
             except (EOFError, KeyboardInterrupt):
-                print_formatted_text(HTML("<info>Good bye!</info>"), style=BOT_STYLE)
+                print_formatted_text(HTML("<bye>Good bye!</bye>"), style=BOT_STYLE)
                 break
 
             if not user_input.strip():
