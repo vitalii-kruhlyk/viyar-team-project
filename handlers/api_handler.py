@@ -3,11 +3,10 @@ from requests.exceptions import RequestException
 
 from handlers.decorators import input_error
 
-class WeatherService:
 
+class WeatherService:
     @input_error
     def get_weather(self, flags: dict[str, str]) -> tuple[str, bool]:
-
         if "-city" not in flags:
             raise ValueError("Usage: show --weather -city <City>")
 
@@ -37,18 +36,17 @@ class WeatherService:
             current = data["current"]
             probability = data["hourly"]["precipitation_probability"][0]
 
-            return (f"Temperature: {current['temperature_2m']}°C\nWind speed: {current['wind_speed_10m']} km/h"
-                    f"\nProbability of rain: {probability}%"), False
+            return (
+                f"Temperature: {current['temperature_2m']}°C\nWind speed: {current['wind_speed_10m']} km/h"
+                f"\nProbability of rain: {probability}%"
+            ), False
         except RequestException:
             return "Unable to retrieve weather data", False
 
-
     @staticmethod
     @input_error
-    def get_coordinates(city: str) -> tuple[str, str]|None:
-        url = (
-            "https://geocoding-api.open-meteo.com/v1/search"
-        )
+    def get_coordinates(city: str) -> tuple[float, float] | None:
+        url = "https://geocoding-api.open-meteo.com/v1/search"
 
         try:
             response = requests.get(url, params={"name": city, "count": 1}, timeout=10)
@@ -63,15 +61,13 @@ class WeatherService:
         except RequestException:
             return None
 
+
 class CurrencyService:
-
     def __init__(self) -> None:
-
         self.currencies = ["USD", "EUR", "PLN"]
 
     @input_error
     def get_currency_rate(self, flags: dict[str, str]) -> tuple[str, bool]:
-
         url = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json"
 
         try:
@@ -82,21 +78,13 @@ class CurrencyService:
             currency_info = []
 
             for currency in self.currencies:
-
-                rate = next(
-                    (item for item in rates if item["cc"] == currency),
-                    None
-                )
+                rate = next((item for item in rates if item["cc"] == currency), None)
 
                 if rate is None:
                     currency_info.append(f"{currency}: not found")
                     continue
 
-                currency_info.append(
-                    f"{rate['cc']}: "
-                    f"{rate['rate']} UAH "
-                    f"({rate['exchangedate']})"
-                )
+                currency_info.append(f"{rate['cc']}: " f"{rate['rate']} UAH " f"({rate['exchangedate']})")
 
             return "\n".join(currency_info), False
         except RequestException:
