@@ -6,7 +6,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from handlers import ContactHandler, NoteHandler, TaskHandler, WeatherService, CurrencyService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
-from storage import JsonStorage
+from storage import JsonStorage, JsonFileHandler
 
 
 class CliBot:
@@ -15,6 +15,7 @@ class CliBot:
     notes: NoteHandler
     weather: WeatherService
     currency: CurrencyService
+    js_file: JsonFileHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -37,6 +38,7 @@ class CliBot:
             "birthday": self.birthday,
             "status": self.status,
             "filter": self.filter,
+            "file": self.file,
             "exit": self.exit_bot,
         }
 
@@ -106,6 +108,10 @@ class CliBot:
                 ("--task -s <status>", "Filter tasks by status"),
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
+            "file": [
+                ("--import-contacts -f <format> -path <file_path>", "Save data to the specified path"),
+                ("--export-contacts -f <format> -path <file_path>", "Download data to the specified path"),
+            ],
             "exit": [
                 ("", "Exit the bot"),
             ],
@@ -120,6 +126,7 @@ class CliBot:
             "-c": "content",
             "-d": "description",
             "-i": "id",
+            "-f": "file format",
             "-q": "search query",
             "-s": "status: new | in progress | done | cancelled",
             "-old": "old value",
@@ -130,6 +137,7 @@ class CliBot:
             "-city": "city",
             "-street": "street",
             "-house": "house number",
+            "-path": "file path",
         }
 
     def parse_command(self, user_input: str) -> tuple[str | None, str | None, dict[str, str]]:
@@ -273,6 +281,13 @@ class CliBot:
         if sub == "--note":
             return self.notes.filter_by_tag(flags)
         return "Usage: filter --task | --note", False
+
+    def file(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
+        if sub == "--import-contacts":
+            return self.js_file.import_file(flags)
+        if sub == "--export-contacts":
+            return self.js_file.export_file(flags)
+        return "Usage: file --import-contacts| --export-contacts -f <format> -path <file_path>", False
 
     @staticmethod
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
