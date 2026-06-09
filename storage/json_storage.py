@@ -1,18 +1,12 @@
 import json
 from pathlib import Path
 
-from handlers.decorators import input_error
-
 
 class JsonStorage:
     path: Path
 
-    def __init__(self, filename: str, file_format: str = None) -> None:
-
-        if file_format is None:
-            self.path = Path(__file__).resolve().parent.parent / filename
-        else:
-            self.path = Path(filename + "." + file_format)
+    def __init__(self, filename: str) -> None:
+        self.path = Path(__file__).resolve().parent.parent / filename
 
     def load(self) -> list[dict]:
         if not self.path.exists():
@@ -35,29 +29,37 @@ class JsonStorage:
 class JsonFileHandler:
     storage: JsonStorage
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, data: dict) -> None:
+        self.data = data
 
-    @input_error
-    def import_file(self, flags: dict[str, str]) -> tuple[str, bool]:
+    @staticmethod
+    def import_file(flags: dict[str, str]) -> tuple[str, bool]:
 
         if "-f" not in flags or "-path" not in flags:
-            raise ValueError("Usage: file --import-contacts -f <format> -path <file_path>")
+            raise ValueError('Usage: file --import-contacts -f <format> -path <"file_path">')
 
         file_format = flags["-f"]
         file_path = flags["-path"]
 
         return "", False
 
-    @input_error
     def export_file(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         if "-f" not in flags or "-path" not in flags:
-            raise ValueError("Usage: file --export-contacts -f <format> -path <file_path>")
+            raise ValueError('Usage: file --export-contacts -f <format> -path <"file_path">')
 
         file_format = flags["-f"]
         file_path = flags["-path"]
 
-        self.storage = JsonStorage(file_path, file_format)
+        path = Path(file_path).with_suffix(f".{file_format}")
+
+        self.save([record.to_dict() for record in self.data.get("contacts").values()], path)
 
         return "Contact list is saved", False
+
+    @staticmethod
+    def save(data: list[dict], file_path: Path) -> None:
+
+        with open(file_path, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+
