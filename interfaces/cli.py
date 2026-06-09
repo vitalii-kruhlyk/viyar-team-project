@@ -3,7 +3,7 @@ from collections.abc import Callable
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from handlers import ContactHandler, NoteHandler, TaskHandler, WeatherService, CurrencyService
+from handlers import ContactHandler, CurrencyService, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
 from storage import JsonStorage
@@ -59,7 +59,7 @@ class CliBot:
                 ("--favorite -n <name>", "Add contact to favorites"),
                 ("--task     -t <title> [-d <description>]", "Create a new task"),
                 ("--note     -t <title> -c <content>", "Create a new note"),
-                ("--tag      -i <id> -t <tag>", "Add tag to a note"),
+                ("--tag      -i <id> -t <tag> | -ai", "Add tag manually or auto-generate with AI"),
             ],
             "edit": [
                 ("--phone     -n <name> -old <phone> -new <phone>", "Change phone number"),
@@ -85,7 +85,7 @@ class CliBot:
                 ("--contact -q <query>", "Search contacts by name, phone or email"),
                 ("--address [-country <X>] [-city <X>] [-street <X>] [-house <X>]", "Search contacts by address"),
                 ("--task    -q <query>", "Search tasks by title or description"),
-                ("--note    -q <query>", "Search notes by title or content"),
+                ("--note    -q <query> [-ai]", "Search notes by content, or semantic search with AI"),
             ],
             "show": [
                 ("--contacts  [-page <size>]", "Show all contacts. Add -page for pagination"),
@@ -93,6 +93,7 @@ class CliBot:
                 ("--favorites", "Show all favorite contacts"),
                 ("--tasks", "Show all tasks"),
                 ("--notes", "Show all notes"),
+                ("--note     -i <id> [-ai]", "Show note summary with AI"),
                 ("--currencies", "Gets the exchange rate for today"),
                 ("--weather -city <name>", "Receives weather data for the city"),
             ],
@@ -186,6 +187,8 @@ class CliBot:
         if sub == "--note":
             return self.notes.add_note(flags)
         if sub == "--tag":
+            if "-ai" in flags:
+                return self.notes.ai_tags(flags)
             return self.notes.add_tag(flags)
         return (
             "Usage: add --contact | --phone | --email | --birthday | --address | --favorite | --task | --note | --tag",
@@ -237,6 +240,8 @@ class CliBot:
         if sub == "--task":
             return self.tasks.search_task(flags)
         if sub == "--note":
+            if "-ai" in flags:
+                return self.notes.ai_search(flags)
             return self.notes.search_note(flags)
         return "Usage: search --contact | --address | --task | --note", False
 
@@ -251,11 +256,17 @@ class CliBot:
             return self.tasks.show_tasks(flags)
         if sub == "--notes":
             return self.notes.show_notes(flags)
+        if sub == "--note":
+            if "-ai" in flags:
+                return self.notes.ai_summary(flags)
+            return "Usage: show --note -i <id> -ai", False
         if sub == "--weather":
             return self.weather.get_weather(flags)
         if sub == "--currencies":
             return self.currency.get_currency_rate(flags)
-        raise ValueError("Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies")
+        raise ValueError(
+            "Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies"
+        )
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":
