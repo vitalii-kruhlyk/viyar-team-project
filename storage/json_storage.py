@@ -38,9 +38,8 @@ class JsonFileHandler:
     def __init__(self) -> None:
         pass
 
-    @classmethod
     @input_error
-    def import_file(cls, flags: dict[str, str]) -> tuple[str, bool]:
+    def import_file(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         if "-f" not in flags or "-path" not in flags:
             raise ValueError("Usage: file --import-contacts -f <format> -path <file_path>")
@@ -50,9 +49,8 @@ class JsonFileHandler:
 
         return "", False
 
-    @classmethod
     @input_error
-    def export_file(cls, flags: dict[str, str]) -> tuple[str, bool]:
+    def export_file(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         if "-f" not in flags or "-path" not in flags:
             raise ValueError("Usage: file --export-contacts -f <format> -path <file_path>")
@@ -60,6 +58,6 @@ class JsonFileHandler:
         file_format = flags["-f"]
         file_path = flags["-path"]
 
-        cls.storage = JsonStorage(file_path, file_format)
+        self.storage = JsonStorage(file_path, file_format)
 
         return "Contact list is saved", False
