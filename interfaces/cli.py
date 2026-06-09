@@ -3,7 +3,7 @@ from collections.abc import Callable
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from handlers import ContactHandler, NoteHandler, TaskHandler
+from handlers import ContactHandler, NoteHandler, TaskHandler, WeatherService, CurrencyService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
 from storage import JsonStorage
@@ -13,6 +13,8 @@ class CliBot:
     contacts: ContactHandler
     tasks: TaskHandler
     notes: NoteHandler
+    weather: WeatherService
+    currency: CurrencyService
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -21,6 +23,8 @@ class CliBot:
         self.contacts = ContactHandler(JsonStorage("contacts.json"))
         self.notes = NoteHandler(JsonStorage("notes.json"))
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
+        self.weather = WeatherService()
+        self.currency = CurrencyService()
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -89,6 +93,8 @@ class CliBot:
                 ("--favorites", "Show all favorite contacts"),
                 ("--tasks", "Show all tasks"),
                 ("--notes", "Show all notes"),
+                ("--currencies", "Gets the exchange rate for today"),
+                ("--weather -city <name>", "Receives weather data for the city"),
             ],
             "birthday": [
                 ("--upcoming -days <number>", "Show all contacts with birthday in next N days"),
@@ -245,7 +251,11 @@ class CliBot:
             return self.tasks.show_tasks(flags)
         if sub == "--notes":
             return self.notes.show_notes(flags)
-        return "Usage: show --contacts | --contact | --favorites | --tasks | --notes", False
+        if sub == "--weather":
+            return self.weather.get_weather(flags)
+        if sub == "--currencies":
+            return self.currency.get_currency_rate(flags)
+        raise ValueError("Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies")
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":

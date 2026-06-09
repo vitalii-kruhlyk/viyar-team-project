@@ -6,6 +6,7 @@ dependencies = [
     "email-validator>=2.3.0",
     "phonenumbers>=9.0.31",
     "prompt-toolkit>=3.0.0",
+    "requests>=2.34.2",
 ]
 
 [dependency-groups]
