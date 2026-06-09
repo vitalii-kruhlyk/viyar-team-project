@@ -15,7 +15,6 @@ class CliBot:
     notes: NoteHandler
     weather: WeatherService
     currency: CurrencyService
-    js_file: JsonFileHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -26,7 +25,6 @@ class CliBot:
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
         self.currency = CurrencyService()
-        self.js_file = JsonFileHandler()
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -39,7 +37,7 @@ class CliBot:
             "birthday": self.birthday,
             "status": self.status,
             "filter": self.filter,
-            "file": self.js_file,
+            "file": self.file,
             "exit": self.exit_bot,
         }
 
@@ -110,8 +108,8 @@ class CliBot:
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
             "file": [
-                ("--import-contacts -f <format> -path <file_path>", "Save data to the specified path"),
-                ("--export-contacts -f <format> -path <file_path>", "Download data to the specified path"),
+                ('--import-contacts -f <format> -path <"file_path">', "Save data to the specified path"),
+                ('--export-contacts -f <format> -path <"file_path">', "Download data to the specified path"),
             ],
             "exit": [
                 ("", "Exit the bot"),
@@ -285,10 +283,10 @@ class CliBot:
 
     def file(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--import-contacts":
-            return self.js_file.import_file(flags)
+            return JsonFileHandler({"contacts": self.contacts.book}).import_file(flags)
         if sub == "--export-contacts":
-            return self.js_file.export_file(flags)
-        return "Usage: file --import-contacts| --export-contacts -f <format> -path <file_path>", False
+            return JsonFileHandler({"contacts": self.contacts.book}).export_file(flags)
+        return 'Usage: file --import-contacts| --export-contacts -f <format> -path <"file_path">', False
 
     @staticmethod
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
