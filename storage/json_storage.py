@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from models import Record
 
 class JsonStorage:
     path: Path
@@ -31,9 +32,9 @@ class JsonFileHandler:
 
     def __init__(self, data: dict) -> None:
         self.data = data
+        self.storage = JsonStorage("contacts.json")
 
-    @staticmethod
-    def import_file(flags: dict[str, str]) -> tuple[str, bool]:
+    def import_file(self, flags: dict[str, str]) -> tuple[str, bool]:
 
         if "-f" not in flags or "-path" not in flags:
             raise ValueError('Usage: file --import-contacts -f <format> -path <"file_path">')
@@ -41,7 +42,11 @@ class JsonFileHandler:
         file_format = flags["-f"]
         file_path = flags["-path"]
 
-        return "", False
+        path = Path(file_path).with_suffix(f".{file_format}")
+
+        self.storage.save([record.to_dict() for record in [Record.from_dict(item) for item in self.load(path)]])
+
+        return "Contact list is loaded", False
 
     def export_file(self, flags: dict[str, str]) -> tuple[str, bool]:
 
@@ -52,7 +57,6 @@ class JsonFileHandler:
         file_path = flags["-path"]
 
         path = Path(file_path).with_suffix(f".{file_format}")
-
         self.save([record.to_dict() for record in self.data.get("contacts").values()], path)
 
         return "Contact list is saved", False
@@ -63,3 +67,12 @@ class JsonFileHandler:
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
+    @staticmethod
+    def load(path: Path) -> list[dict]:
+        if not path.exists():
+            return []
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            return []
