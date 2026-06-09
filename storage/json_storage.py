@@ -7,12 +7,12 @@ from handlers.decorators import input_error
 class JsonStorage:
     path: Path
 
-    def __init__(self, filename: str, file_dir: str = None) -> None:
+    def __init__(self, filename: str, file_format: str = None) -> None:
 
-        if dir is None:
+        if file_format is None:
             self.path = Path(__file__).resolve().parent.parent / filename
         else:
-            self.path = Path(file_dir) / filename
+            self.path = Path(filename + "." + file_format)
 
     def load(self) -> list[dict]:
         if not self.path.exists():
@@ -58,7 +58,6 @@ class JsonFileHandler:
         file_format = flags["-f"]
         file_path = flags["-path"]
 
+        self.storage = JsonStorage(file_path, file_format)
 
-
-
-        return "", False
+        return "Contact list is saved", False
