@@ -17,8 +17,8 @@ _LABELS = "Contact name|phones|emails|address|birthday|tags"
 _LABEL_RE = re.compile(rf"\b({_LABELS}):( *)(.*?)(?=,\s*(?:{_LABELS})\b|\n|$)")
 _STATUS_RE = re.compile(r"\((new|in progress|done|cancelled)\)")
 _STATUS_COLORS = {
-    "new": "#4488ff",
-    "in progress": "#ffaa00",
+    "new": "#ffaa00",
+    "in progress": "#4488ff",
     "done": "#00aa00",
     "cancelled": "#888888",
 }
