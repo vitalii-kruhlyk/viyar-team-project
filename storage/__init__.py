@@ -1,3 +1,3 @@
-from storage.json_storage import JsonStorage
+from storage.json_storage import JsonStorage, JsonFileHandler
 
-__all__ = ["JsonStorage"]
+__all__ = ["JsonStorage", "JsonFileHandler"]
