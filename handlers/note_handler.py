@@ -15,6 +15,8 @@ class NoteHandler:
         self.storage.save(self.book.to_list())
 
     def _get_note_or_raise(self, id_str: str):
+        if not id_str.isdigit():
+            raise ValueError("Note id must be a positive number")
         note_id = int(id_str)
         note = self.book.get(note_id)
         if note is None:
