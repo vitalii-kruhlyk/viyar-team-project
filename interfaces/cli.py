@@ -26,6 +26,7 @@ class CliBot:
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
         self.currency = CurrencyService()
+        self.js_file = JsonFileHandler()
         self.commands = {
             "hello": self.hello,
             "help": self.help,
