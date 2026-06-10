@@ -40,26 +40,43 @@ class CsvFileHandler:
     @staticmethod
     def save(data: list[dict], file_path: Path) -> None:
 
+        if not data:
+            raise ValueError("No data to export")
+
         with open(file_path, "w", newline="", encoding="utf-8") as file:
+
+            fieldnames = sorted(
+                {
+                    key
+                    for record in data
+                    for key in record.keys()
+                }
+            )
 
             writer = csv.DictWriter(
                 file,
-                fieldnames=["name", "phones", "emails", "birthday", "address", "favorite"]
+                fieldnames = fieldnames,
+                extrasaction="ignore"
             )
 
             writer.writeheader()
 
             for record in data:
-                writer.writerow(
-                    {
-                        "name": record["name"],
-                        "phones": ";".join(record["phones"]),
-                        "emails": ";".join(record["emails"]),
-                        "birthday": record["birthday"],
-                        "address": record["address"],
-                        "favorite": record["favorite"],
-                    }
-                )
+
+                row = {}
+
+                for key, value in record.items():
+
+                    if isinstance(value, list):
+                        row[key] = ";".join(value)
+
+                    elif value is None:
+                        row[key] = ""
+
+                    else:
+                        row[key] = value
+
+                writer.writerow(row)
 
     @staticmethod
     def load(file_path: Path) -> list[dict]:
