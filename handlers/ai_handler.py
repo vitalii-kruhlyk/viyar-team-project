@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from google import genai
-from google.genai.errors import ClientError
+from google.genai.errors import APIError, ClientError
 
 PRIMARY_MODEL = "gemini-3.1-flash-lite"
 FALLBACK_MODEL = "gemma-4-31b"
@@ -24,34 +24,31 @@ def _get_client() -> genai.Client:
 def _generate(prompt: str) -> str:
     client = _get_client()
     try:
-        response = client.models.generate_content(
-            model=PRIMARY_MODEL,
-            contents=prompt,
-        )
-    except ClientError as e:
-        if e.code == 429:
-            response = client.models.generate_content(
-                model=FALLBACK_MODEL,
-                contents=prompt,
-            )
-        elif e.code in (403, 500):
-            raise ValueError(f"Gemini API error {e.code}: {e.message}") from e
-        else:
-            raise
-    if response.text is None:
+        try:
+            response = client.models.generate_content(model=PRIMARY_MODEL, contents=prompt)
+        except ClientError as e:
+            if e.code != 429:
+                raise
+            response = client.models.generate_content(model=FALLBACK_MODEL, contents=prompt)
+    except APIError as e:
+        raise ValueError(f"Gemini API error {e.code}: {e.message}") from e
+    if not response.text:
         raise ValueError("Gemini returned empty response (content may be blocked by safety filter)")
     return response.text.strip()
 
 
 def _embed(text: str) -> list[float]:
     client = _get_client()
-    response = client.models.embed_content(
-        model=EMBEDDING_MODEL,
-        contents=text,
-    )
+    try:
+        response = client.models.embed_content(model=EMBEDDING_MODEL, contents=text)
+    except APIError as e:
+        raise ValueError(f"Gemini API error {e.code}: {e.message}") from e
     if not response.embeddings:
         raise ValueError("Gemini returned empty embeddings")
-    return response.embeddings[0].values or []
+    value = response.embeddings[0].values
+    if not value:
+        raise ValueError("Gemini returned empty embedding value")
+    return value
 
 
 def generate_tags(content: str) -> list[str]:
@@ -60,7 +57,7 @@ def generate_tags(content: str) -> list[str]:
         f"Return only a comma-separated list of tags, no explanations.\n\n{content}"
     )
     result = _generate(prompt)
-    return [tag.strip().lstrip("#") for tag in result.split(",") if tag.strip()]
+    return [tag.strip().lstrip("#") for tag in result.split(",") if tag.strip()][:5]
 
 
 def generate_summary(content: str) -> str:
@@ -79,7 +76,7 @@ def semantic_search(query: str, notes: list[dict]) -> list[dict]:
     results = []
     for note in notes:
         cached = note.get("embedding")
-        if isinstance(cached, list) and len(cached) > 0:
+        if isinstance(cached, list) and len(cached) == len(query_embedding):
             note_embedding = np.array(cached)
         else:
             text = f"{note.get('title', '')} {note.get('content', '')}"
