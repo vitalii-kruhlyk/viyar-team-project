@@ -87,27 +87,15 @@ class CsvFileHandler:
         result = []
 
         with open(file_path, "r", newline="", encoding="utf-8") as file:
-
             reader = csv.DictReader(file)
 
-            for row in reader:
+            result = []
 
+            for row in reader:
                 result.append(
                     {
-                        "name": row["name"],
-                        "phones": (
-                            row["phones"].split(";")
-                            if row["phones"]
-                            else []
-                        ),
-                        "emails": (
-                            row["emails"].split(";")
-                            if row["emails"]
-                            else []
-                        ),
-                        "birthday": row["birthday"] or None,
-                        "address": row["address"] == "True",
-                        "favorite": row["favorite"] == "True",
+                        key: value if value != "" else None
+                        for key, value in row.items()
                     }
                 )
 
