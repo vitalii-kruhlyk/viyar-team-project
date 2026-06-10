@@ -75,4 +75,4 @@ class JsonFileHandler:
             with open(path, "r", encoding="utf-8") as file:
                 return json.load(file)
         except json.JSONDecodeError:
-            raise json.JSONDecodeError
+            raise json.JSONDecodeError("Invalid json file")
