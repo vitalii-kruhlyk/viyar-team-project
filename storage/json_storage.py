@@ -64,6 +64,11 @@ class JsonFileHandler:
 
     @staticmethod
     def save(data: list[dict], file_path: Path) -> None:
+        if not data:
+            raise ValueError("No data to export")
+
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
@@ -75,4 +80,4 @@ class JsonFileHandler:
             with open(path, "r", encoding="utf-8") as file:
                 return json.load(file)
         except json.JSONDecodeError:
-            raise json.JSONDecodeError("Invalid json file")
+            raise ValueError("Invalid JSON file")
