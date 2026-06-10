@@ -6,7 +6,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from handlers import ContactHandler, CurrencyService, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
-from storage import JsonFileHandler, JsonStorage
+from storage import JsonFileHandler, JsonStorage, CsvFileHandler
 
 
 class CliBot:
@@ -16,6 +16,7 @@ class CliBot:
     weather: WeatherService
     currency: CurrencyService
     json_file: JsonFileHandler
+    csv_file:CsvFileHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -27,6 +28,7 @@ class CliBot:
         self.weather = WeatherService()
         self.currency = CurrencyService()
         self.json_file = JsonFileHandler()
+        self.csv_file = CsvFileHandler()
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -110,8 +112,8 @@ class CliBot:
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
             "file": [
-                ('--import-contacts -f <format> -path <"file_path">', "Save data to the specified path"),
-                ('--export-contacts -f <format> -path <"file_path">', "Download data to the specified path"),
+                ('--import-contacts -f <json|csv> -path <"file_path">', "Save data to the specified path"),
+                ('--export-contacts -f <json|csv> -path <"file_path">', "Download data to the specified path"),
             ],
             "exit": [
                 ("", "Exit the bot"),
@@ -286,10 +288,21 @@ class CliBot:
         return "Usage: filter --task | --note", False
 
     def file(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-f" not in flags:
+            raise ValueError('Usage: file --import-contacts -f <format> -path <"file_path">')
+
+        fiel_format = flags["-f"]
+
         if sub == "--import-contacts":
-            return self.json_file.import_file(self.contacts, flags)
+            if fiel_format == "csv":
+                return self.csv_file.import_file(self.contacts, flags)
+            if fiel_format == "json":
+                return self.json_file.import_file(self.contacts, flags)
         if sub == "--export-contacts":
-            return self.json_file.export_file(self.contacts, flags)
+            if fiel_format == "csv":
+                return self.csv_file.export_file(self.contacts, flags)
+            if fiel_format == "json":
+                return self.json_file.export_file(self.contacts, flags)
         return 'Usage: file --import-contacts| --export-contacts -f <format> -path <"file_path">', False
 
     @staticmethod
