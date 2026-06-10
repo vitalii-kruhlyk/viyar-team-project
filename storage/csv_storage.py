@@ -43,6 +43,11 @@ class CsvFileHandler:
         if not data:
             raise ValueError("No data to export")
 
+        file_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
         with open(file_path, "w", newline="", encoding="utf-8") as file:
 
             fieldnames = sorted(
@@ -88,6 +93,9 @@ class CsvFileHandler:
 
         with open(file_path, "r", newline="", encoding="utf-8") as file:
             reader = csv.DictReader(file)
+
+            if not reader.fieldnames:
+                raise ValueError("CSV file is empty")
 
             result = []
 
