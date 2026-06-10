@@ -1,5 +1,7 @@
 import shlex
 
+BOOLEAN_FLAGS = {"-ai"}
+
 
 def _is_flag(token: str) -> bool:
     if not token.startswith("-"):
@@ -38,6 +40,9 @@ def parse_flags(raw_args: list[str]) -> dict[str, str]:
             if i + 1 < len(raw_args) and not _is_flag(raw_args[i + 1]):
                 result[token] = raw_args[i + 1]
                 i += 2
+            elif token in BOOLEAN_FLAGS:
+                result[token] = "true"
+                i += 1
             else:
                 raise ValueError(f"Flag '{token}' requires a value")
         else:

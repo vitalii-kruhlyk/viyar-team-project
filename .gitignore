@@ -208,6 +208,7 @@ tempCodeRunnerFile.py
 
 # Project data files
 contacts.json
+notes.json
 tasks.json
 
 # PyPI configuration file
@@ -220,5 +221,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-contacts.json
