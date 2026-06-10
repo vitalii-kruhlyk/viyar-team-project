@@ -112,8 +112,8 @@ class CliBot:
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
             "file": [
-                ('--import-contacts -f <json|csv> -path <"file_path">', "Save data to the specified path"),
-                ('--export-contacts -f <json|csv> -path <"file_path">', "Download data to the specified path"),
+                ('--import-contacts -f <json | csv> -path <"file_path">', "Save data to the specified path"),
+                ('--export-contacts -f <json | csv> -path <"file_path">', "Download data to the specified path"),
             ],
             "exit": [
                 ("", "Exit the bot"),
