@@ -93,7 +93,7 @@ class CliBot:
                 ("--favorites", "Show all favorite contacts"),
                 ("--tasks", "Show all tasks"),
                 ("--notes", "Show all notes"),
-                ("--note     -i <id> [-ai]", "Show note summary with AI"),
+                ("--note     -i <id> [-ai]", "Show note, or AI summary with -ai"),
                 ("--currencies", "Gets the exchange rate for today"),
                 ("--weather -city <name>", "Receives weather data for the city"),
             ],
@@ -259,7 +259,7 @@ class CliBot:
         if sub == "--note":
             if "-ai" in flags:
                 return self.notes.ai_summary(flags)
-            return "Usage: show --note -i <id> -ai", False
+            return self.notes.show_note(flags)
         if sub == "--weather":
             return self.weather.get_weather(flags)
         if sub == "--currencies":

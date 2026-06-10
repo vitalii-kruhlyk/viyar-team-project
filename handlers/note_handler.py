@@ -76,6 +76,13 @@ class NoteHandler:
         return "\n".join(str(n) for n in notes), False
 
     @input_error
+    def show_note(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags:
+            raise ValueError("Usage: show --note -i <id>")
+        note = self._get_note_or_raise(flags["-i"])
+        return str(note), False
+
+    @input_error
     def search_note(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-q" not in flags:
             raise ValueError("Usage: search --note -q <query>")
