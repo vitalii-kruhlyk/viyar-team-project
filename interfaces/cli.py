@@ -3,10 +3,10 @@ from collections.abc import Callable
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from handlers import ContactHandler, NoteHandler, TaskHandler, WeatherService, CurrencyService
+from handlers import ContactHandler, CurrencyService, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
-from storage import JsonStorage, JsonFileHandler
+from storage import JsonFileHandler, JsonStorage
 
 
 class CliBot:
@@ -15,6 +15,7 @@ class CliBot:
     notes: NoteHandler
     weather: WeatherService
     currency: CurrencyService
+    json_file: JsonFileHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -25,6 +26,7 @@ class CliBot:
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
         self.currency = CurrencyService()
+        self.json_file = JsonFileHandler()
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -262,7 +264,9 @@ class CliBot:
             return self.weather.get_weather(flags)
         if sub == "--currencies":
             return self.currency.get_currency_rate(flags)
-        raise ValueError("Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies")
+        raise ValueError(
+            "Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies"
+        )
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":
@@ -283,9 +287,9 @@ class CliBot:
 
     def file(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--import-contacts":
-            return JsonFileHandler({"contacts": self.contacts.book}).import_file(flags)
+            return self.json_file.import_file(self.contacts, flags)
         if sub == "--export-contacts":
-            return JsonFileHandler({"contacts": self.contacts.book}).export_file(flags)
+            return self.json_file.export_file(self.contacts, flags)
         return 'Usage: file --import-contacts| --export-contacts -f <format> -path <"file_path">', False
 
     @staticmethod
