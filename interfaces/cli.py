@@ -139,6 +139,7 @@ class CliBot:
             "-c": "content",
             "-d": "description",
             "-i": "id",
+            "-f": "file format",
             "-q": "search query",
             "-s": "status: new | in progress | done | cancelled",
             "-old": "old value",
