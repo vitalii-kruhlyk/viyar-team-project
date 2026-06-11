@@ -16,6 +16,7 @@ class CliBot:
     notes: NoteHandler
     weather: WeatherService
     currency: CurrencyService
+    files: FileHandler
     json_file: JsonFileHandler
     csv_file: CsvFileHandler
     commands: dict[str, Callable]
@@ -28,6 +29,7 @@ class CliBot:
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
         self.currency = CurrencyService()
+        self.files = FileHandler()
         self.json_file = JsonFileHandler()
         self.csv_file = CsvFileHandler()
         self._importable_sources = {
@@ -45,6 +47,7 @@ class CliBot:
             "birthday": self.birthday,
             "status": self.status,
             "filter": self.filter,
+            "files": self.handle_files,
             "import": self.import_data,
             "export": self.export_data,
             "exit": self.exit_bot,
@@ -117,6 +120,11 @@ class CliBot:
                 ("--task -s <status>", "Filter tasks by status"),
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
+            "files": [
+                ("--sort       -path <path>", "Sort files in directory into categories"),
+                ("--duplicates -path <path>", "Find duplicate files by MD5 hash"),
+                ("--normalize  -path <path>", "Transliterate and sanitize filenames"),
+            ],
             "import": [
                 (f'{sub} -path <"file_path.json|csv">', f"Load {sub.lstrip('-')} from a file")
                 for sub in self._importable_sources
@@ -151,7 +159,6 @@ class CliBot:
             "-city": "city",
             "-street": "street",
             "-house": "house number",
-            "-path": "file path",
         }
 
     def parse_command(self, user_input: str) -> tuple[str | None, str | None, dict[str, str]]:
@@ -285,9 +292,7 @@ class CliBot:
             return self.weather.get_weather(flags)
         if sub == "--currencies":
             return self.currency.get_currency_rate(flags)
-        raise ValueError(
-            "Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies"
-        )
+        return "Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies", False
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":
@@ -305,6 +310,15 @@ class CliBot:
         if sub == "--note":
             return self.notes.filter_by_tag(flags)
         return "Usage: filter --task | --note", False
+
+    def handle_files(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
+        if sub == "--sort":
+            return self.files.sort_files(flags)
+        if sub == "--duplicates":
+            return self.files.find_duplicates(flags)
+        if sub == "--normalize":
+            return self.files.normalize_files(flags)
+        return "Usage: files --sort | --duplicates | --normalize", False
 
     def _file_handler(self, flags: dict[str, str]) -> "JsonFileHandler | CsvFileHandler | None":
         ext = Path(flags["-path"]).suffix.lstrip(".").lower() if "-path" in flags else ""
