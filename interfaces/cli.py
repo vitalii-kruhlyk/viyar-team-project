@@ -322,9 +322,7 @@ class CliBot:
             return self.weather.get_weather(flags)
         if sub == "--currencies":
             return self.currency.get_currency_rate(flags)
-        raise ValueError(
-            "Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies"
-        )
+        return "Usage: show --contacts | --contact | --favorites | --tasks | --notes | --weather | --currencies", False
 
     def birthday(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
         if sub == "--upcoming":
