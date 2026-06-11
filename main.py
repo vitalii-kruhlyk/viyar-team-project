@@ -1,6 +1,9 @@
-from bot import Bot
+from dotenv import load_dotenv
+
+from interfaces.cli import CliBot
+
+load_dotenv()
 
 
 if __name__ == "__main__":
-	Bot().run()
-
+    CliBot().run()

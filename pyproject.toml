@@ -1,0 +1,29 @@
+[project]
+name = "viyar-team-project"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "email-validator>=2.3.0",
+    "google-genai>=2.8.0",
+    "numpy>=2.4.6",
+    "phonenumbers>=9.0.31",
+    "prompt-toolkit>=3.0.0",
+    "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.0",
+    "ruff>=0.15.15",
+]
+
+[tool.ruff]
+# The standard line length (same as Black)
+line-length = 120
+
+[tool.ruff.lint]
+# E: pycodestyle (standard errors)
+# F: Pyflakes (syntax errors, undefined variables)
+# I: isort (automatically alphabetizes and groups your imports)
+select = ["E", "F", "I"]
