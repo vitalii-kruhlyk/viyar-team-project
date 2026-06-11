@@ -111,9 +111,9 @@ class CliBot:
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
             "files": [
-                ("--sort       -p <path>", "Sort files in directory into categories"),
-                ("--duplicates -p <path>", "Find duplicate files by MD5 hash"),
-                ("--normalize  -p <path>", "Transliterate and sanitize filenames"),
+                ("--sort       -path <path>", "Sort files in directory into categories"),
+                ("--duplicates -path <path>", "Find duplicate files by MD5 hash"),
+                ("--normalize  -path <path>", "Transliterate and sanitize filenames"),
             ],
             "exit": [
                 ("", "Exit the bot"),
@@ -123,6 +123,7 @@ class CliBot:
         self.flag_descriptions = {
             "-n": "contact name",
             "-p": "phone number(s), comma-separated",
+            "-path": "directory path",
             "-e": "email(s), comma-separated",
             "-b": "birthday in DD.MM.YYYY",
             "-t": "title / tag",
