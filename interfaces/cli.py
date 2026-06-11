@@ -1,13 +1,71 @@
+import re
 from collections.abc import Callable
+from html import escape as _escape
 from pathlib import Path
 
-from prompt_toolkit import PromptSession
+from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.styles import Style
 
 from handlers import ContactHandler, CurrencyService, FileHandler, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
+from interfaces.lexer import BotLexer
 from interfaces.parser import parse_flags, split_input
 from storage import CsvFileHandler, JsonFileHandler, JsonStorage
+
+_LABELS = "Contact name|phones|emails|address|birthday|tags"
+_LABEL_RE = re.compile(rf"\b({_LABELS}):( *)(.*?)(?=,\s*(?:{_LABELS})\b|\n|$)")
+_STATUS_RE = re.compile(r"\((new|in progress|done|cancelled)\)")
+_STATUS_COLORS = {
+    "new": "#ffaa00",
+    "in progress": "#4488ff",
+    "done": "#00aa00",
+    "cancelled": "#888888",
+}
+_NOTE_TITLE_RE = re.compile(r"^(\[\d+\]) ([^:(]+):")
+_TASK_TITLE_RE = re.compile(r"^(\[\d+\]) ([^(]+?) (?=\()")
+
+
+def _colorize(message: str) -> str:
+    lines = message.split("\n")
+    result = []
+    for line in lines:
+        escaped = _escape(line)
+        colorized = _NOTE_TITLE_RE.sub(
+            lambda m: f"{m.group(1)} <title>{m.group(2)}</title>:",
+            escaped,
+        )
+        colorized = _TASK_TITLE_RE.sub(
+            lambda m: f"{m.group(1)} <title>{m.group(2).rstrip()}</title> ",
+            colorized,
+        )
+        colorized = _LABEL_RE.sub(
+            lambda m: (f"<success>{m.group(1)}:</success>" f"{m.group(2)}" f"<subcommand>{m.group(3)}</subcommand>"),
+            colorized,
+        )
+        colorized = _STATUS_RE.sub(
+            lambda m: f'<style fg="{_STATUS_COLORS[m.group(1)]}">({m.group(1)})</style>',
+            colorized,
+        )
+        result.append(colorized)
+    return "\n".join(result)
+
+
+BOT_STYLE = Style.from_dict(
+    {
+        "command": "#ffaa00 bold",
+        "subcommand": "#00aaaa",
+        "flag": "#00aa00",
+        "value": "#ffffff",
+        "success": "#00aa00",
+        "error": "#ff4444 bold",
+        "info": "#888888",
+        "prompt": "#888888",
+        "title": "bold #ffffff",
+        "bye": "bold #ffaa00",
+    }
+)
 
 
 class CliBot:
@@ -350,27 +408,42 @@ class CliBot:
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
         return "Good bye!", True
 
+    @staticmethod
+    def _print(message: str, style: str = "success") -> None:
+        if message == "Good bye!":
+            print_formatted_text(HTML("<bye>Good bye!</bye>"), style=BOT_STYLE)
+            return
+        is_error = any(
+            message.lower().startswith(prefix) for prefix in ("error", "not found", "usage:", "input error", "no ")
+        )
+        if is_error:
+            print_formatted_text(HTML(f"<error>{_escape(message)}</error>"), style=BOT_STYLE)
+        else:
+            print_formatted_text(HTML(_colorize(message)), style=BOT_STYLE)
+
     def run(self) -> None:
         try:
             session: PromptSession = PromptSession(
                 completer=BotCompleter(self.descriptions, self.flag_descriptions),
                 auto_suggest=AutoSuggestFromHistory(),
+                lexer=BotLexer(),
+                style=BOT_STYLE,
             )
 
             def prompt() -> str:
-                return session.prompt("Enter a command: ")
+                return session.prompt(HTML("\n<prompt>Enter a command: </prompt>"))
 
         except (OSError, RuntimeError):
 
             def prompt() -> str:
                 return input("Enter a command: ")
 
-        print("Bot started. Type 'hello' to begin.")
+        print_formatted_text(HTML("<info>Bot started. Type 'hello' to begin.</info>"), style=BOT_STYLE)
         while True:
             try:
                 user_input = prompt()
             except (EOFError, KeyboardInterrupt):
-                print("Good bye!")
+                print_formatted_text(HTML("<bye>Good bye!</bye>"), style=BOT_STYLE)
                 break
 
             if not user_input.strip():
@@ -379,19 +452,22 @@ class CliBot:
             try:
                 command, subcommand, flags = self.parse_command(user_input)
             except ValueError as e:
-                print(f"Input error: {e}")
+                print_formatted_text(HTML(f"<error>Input error: {e}</error>"), style=BOT_STYLE)
                 continue
 
             if command is None:
-                print("Unknown command. Type 'help' to see all available commands.")
+                print_formatted_text(
+                    HTML("<error>Unknown command. Type 'help' to see all available commands.</error>"),
+                    style=BOT_STYLE,
+                )
                 continue
 
             try:
                 message, should_exit = self.commands[command](subcommand, flags)
             except ValueError as e:
-                print(f"Input error: {e}")
+                print_formatted_text(HTML(f"<error>Input error: {e}</error>"), style=BOT_STYLE)
                 continue
 
-            print(message)
+            self._print(message)
             if should_exit:
                 break
