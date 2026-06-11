@@ -106,11 +106,11 @@ class FileHandler:
     @input_error
     def sort_files(self, flags: dict[str, str]) -> tuple[str, bool]:
         # check mandatory params
-        if "-p" not in flags:
-            raise ValueError("Usage: files --sort -p <directory>")
+        if "-path" not in flags:
+            raise ValueError("Usage: files --sort -path <directory>")
 
         # check & get directory
-        directory = Path(flags["-p"])
+        directory = Path(flags["-path"])
         if not directory.is_dir():
             raise ValueError(f"Directory not found: {directory}")
 
@@ -151,11 +151,11 @@ class FileHandler:
     @input_error
     def find_duplicates(self, flags: dict[str, str]) -> tuple[str, bool]:
         # check mandatory params
-        if "-p" not in flags:
-            raise ValueError("Usage: files --duplicates -p <directory>")
+        if "-path" not in flags:
+            raise ValueError("Usage: files --duplicates -path <directory>")
 
         # check & get directory
-        directory = Path(flags["-p"])
+        directory = Path(flags["-path"])
         if not directory.is_dir():
             raise ValueError(f"Directory not found: {directory}")
 
@@ -188,11 +188,11 @@ class FileHandler:
     @input_error
     def normalize_files(self, flags: dict[str, str]) -> tuple[str, bool]:
         # check mandatory params
-        if "-p" not in flags:
-            raise ValueError("Usage: files --normalize -p <directory>")
+        if "-path" not in flags:
+            raise ValueError("Usage: files --normalize -path <directory>")
 
         # check & get directory
-        directory = Path(flags["-p"])
+        directory = Path(flags["-path"])
         if not directory.is_dir():
             raise ValueError(f"Directory not found: {directory}")
 
