@@ -4,7 +4,7 @@ from pathlib import Path
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from handlers import ContactHandler, CurrencyService, NoteHandler, TaskHandler, WeatherService
+from handlers import ContactHandler, CurrencyService, FileHandler, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
 from storage import CsvFileHandler, JsonFileHandler, JsonStorage
@@ -133,6 +133,7 @@ class CliBot:
         self.flag_descriptions = {
             "-n": "contact name",
             "-p": "phone number(s), comma-separated",
+            "-path": "directory path",
             "-e": "email(s), comma-separated",
             "-b": "birthday in DD.MM.YYYY",
             "-t": "title / tag",
