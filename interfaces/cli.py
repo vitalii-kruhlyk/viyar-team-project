@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -6,7 +7,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from handlers import ContactHandler, CurrencyService, FileHandler, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
-from storage import JsonStorage
+from storage import CsvFileHandler, JsonFileHandler, JsonStorage
 
 
 class CliBot:
@@ -15,7 +16,8 @@ class CliBot:
     notes: NoteHandler
     weather: WeatherService
     currency: CurrencyService
-    files: FileHandler
+    json_file: JsonFileHandler
+    csv_file: CsvFileHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -26,7 +28,11 @@ class CliBot:
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
         self.currency = CurrencyService()
-        self.files = FileHandler()
+        self.json_file = JsonFileHandler()
+        self.csv_file = CsvFileHandler()
+        self._importable_sources = {
+            "--contacts": self.contacts,
+        }
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -39,7 +45,8 @@ class CliBot:
             "birthday": self.birthday,
             "status": self.status,
             "filter": self.filter,
-            "files": self.handle_files,
+            "import": self.import_data,
+            "export": self.export_data,
             "exit": self.exit_bot,
         }
 
@@ -110,10 +117,13 @@ class CliBot:
                 ("--task -s <status>", "Filter tasks by status"),
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
-            "files": [
-                ("--sort       -path <path>", "Sort files in directory into categories"),
-                ("--duplicates -path <path>", "Find duplicate files by MD5 hash"),
-                ("--normalize  -path <path>", "Transliterate and sanitize filenames"),
+            "import": [
+                (f'{sub} -path <"file_path.json|csv">', f"Load {sub.lstrip('-')} from a file")
+                for sub in self._importable_sources
+            ],
+            "export": [
+                (f'{sub} -path <"file_path.json|csv">', f"Save {sub.lstrip('-')} to a file")
+                for sub in self._importable_sources
             ],
             "exit": [
                 ("", "Exit the bot"),
@@ -130,6 +140,7 @@ class CliBot:
             "-c": "content",
             "-d": "description",
             "-i": "id",
+            "-f": "file format",
             "-q": "search query",
             "-s": "status: new | in progress | done | cancelled",
             "-old": "old value",
@@ -140,6 +151,7 @@ class CliBot:
             "-city": "city",
             "-street": "street",
             "-house": "house number",
+            "-path": "file path",
         }
 
     def parse_command(self, user_input: str) -> tuple[str | None, str | None, dict[str, str]]:
@@ -294,14 +306,31 @@ class CliBot:
             return self.notes.filter_by_tag(flags)
         return "Usage: filter --task | --note", False
 
-    def handle_files(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
-        if sub == "--sort":
-            return self.files.sort_files(flags)
-        if sub == "--duplicates":
-            return self.files.find_duplicates(flags)
-        if sub == "--normalize":
-            return self.files.normalize_files(flags)
-        return "Usage: files --sort | --duplicates | --normalize", False
+    def _file_handler(self, flags: dict[str, str]) -> "JsonFileHandler | CsvFileHandler | None":
+        ext = Path(flags["-path"]).suffix.lstrip(".").lower() if "-path" in flags else ""
+        if ext == "json":
+            return self.json_file
+        if ext == "csv":
+            return self.csv_file
+        return None
+
+    def import_data(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
+        source = self._importable_sources.get(sub)
+        if source is not None:
+            file_handler = self._file_handler(flags)
+            if file_handler:
+                return file_handler.import_file(source, flags)
+        subs = " | ".join(self._importable_sources)
+        return f'Usage: import {subs} -path <"file_path.json|csv">', False
+
+    def export_data(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
+        source = self._importable_sources.get(sub)
+        if source is not None:
+            file_handler = self._file_handler(flags)
+            if file_handler:
+                return file_handler.export_file(source, flags)
+        subs = " | ".join(self._importable_sources)
+        return f'Usage: export {subs} -path <"file_path.json|csv">', False
 
     @staticmethod
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
