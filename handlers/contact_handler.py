@@ -19,14 +19,6 @@ class ContactHandler:
     def _save(self) -> None:
         self.storage.save([record.to_dict() for record in self.book.values()])
 
-    def export_records(self) -> list[dict]:
-        return [record.to_dict() for record in self.book.values()]
-
-    def import_records(self, data: list[dict]) -> None:
-        for item in data:
-            self.book.add_record(Record.from_dict(item))
-        self._save()
-
     @input_error
     def add_contact(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-n" not in flags:

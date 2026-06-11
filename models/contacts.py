@@ -206,20 +206,10 @@ class Record:
 
         record = cls(name, birthday)
 
-        phones = data.get("phones", []) or []
-
-        if isinstance(phones, str):
-            phones = phones.split(";")
-
-        for phone in phones:
+        for phone in data.get("phones", []):
             record.add_phone(phone)
 
-        emails = data.get("emails", []) or []
-
-        if isinstance(emails, str):
-            emails = emails.split(";")
-
-        for email in emails:
+        for email in data.get("emails", []):
             record.add_email(email)
 
         address_data = data.get("address")
