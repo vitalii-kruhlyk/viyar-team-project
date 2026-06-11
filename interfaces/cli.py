@@ -3,7 +3,7 @@ from collections.abc import Callable
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from handlers import ContactHandler, CurrencyService, NoteHandler, TaskHandler, WeatherService
+from handlers import ContactHandler, CurrencyService, FileHandler, NoteHandler, TaskHandler, WeatherService
 from interfaces.completer import BotCompleter
 from interfaces.parser import parse_flags, split_input
 from storage import JsonStorage
@@ -15,6 +15,7 @@ class CliBot:
     notes: NoteHandler
     weather: WeatherService
     currency: CurrencyService
+    files: FileHandler
     commands: dict[str, Callable]
     descriptions: dict[str, list[tuple[str, str]]]
     flag_descriptions: dict[str, str]
@@ -25,6 +26,7 @@ class CliBot:
         self.tasks = TaskHandler(JsonStorage("tasks.json"))
         self.weather = WeatherService()
         self.currency = CurrencyService()
+        self.files = FileHandler()
         self.commands = {
             "hello": self.hello,
             "help": self.help,
@@ -37,6 +39,7 @@ class CliBot:
             "birthday": self.birthday,
             "status": self.status,
             "filter": self.filter,
+            "files": self.handle_files,
             "exit": self.exit_bot,
         }
 
@@ -107,6 +110,11 @@ class CliBot:
                 ("--task -s <status>", "Filter tasks by status"),
                 ("--note -t <tag>", "Filter notes by tag"),
             ],
+            "files": [
+                ("--sort       -path <path>", "Sort files in directory into categories"),
+                ("--duplicates -path <path>", "Find duplicate files by MD5 hash"),
+                ("--normalize  -path <path>", "Transliterate and sanitize filenames"),
+            ],
             "exit": [
                 ("", "Exit the bot"),
             ],
@@ -115,6 +123,7 @@ class CliBot:
         self.flag_descriptions = {
             "-n": "contact name",
             "-p": "phone number(s), comma-separated",
+            "-path": "directory path",
             "-e": "email(s), comma-separated",
             "-b": "birthday in DD.MM.YYYY",
             "-t": "title / tag",
@@ -284,6 +293,15 @@ class CliBot:
         if sub == "--note":
             return self.notes.filter_by_tag(flags)
         return "Usage: filter --task | --note", False
+
+    def handle_files(self, sub: str | None, flags: dict[str, str]) -> tuple[str, bool]:
+        if sub == "--sort":
+            return self.files.sort_files(flags)
+        if sub == "--duplicates":
+            return self.files.find_duplicates(flags)
+        if sub == "--normalize":
+            return self.files.normalize_files(flags)
+        return "Usage: files --sort | --duplicates | --normalize", False
 
     @staticmethod
     def exit_bot(_sub: str | None, _flags: dict[str, str]) -> tuple[str, bool]:
