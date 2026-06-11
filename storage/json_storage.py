@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from models import Record
+from storage.base import BaseFileHandler
 
 
 class JsonStorage:
@@ -29,55 +29,19 @@ class JsonStorage:
         temp_file.replace(self.path)
 
 
-class JsonFileHandler:
-    def __init__(self) -> None:
-        pass
-
-    def import_file(self, contacts, flags: dict[str, str]) -> tuple[str, bool]:
-        if "-f" not in flags or "-path" not in flags:
-            raise ValueError('Usage: file --import-contacts -f <format> -path <"file_path">')
-
-        file_format = flags["-f"]
-        file_path = flags["-path"]
-
-        path = Path(file_path).with_suffix(f".{file_format}")
-
-        for item in self.load(path):
-            contacts.book.add_record(Record.from_dict(item))
-
-        contacts._save()
-
-        return "Contact list is loaded", False
-
-    def export_file(self, contacts, flags: dict[str, str]) -> tuple[str, bool]:
-        if "-f" not in flags or "-path" not in flags:
-            raise ValueError('Usage: file --export-contacts -f <format> -path <"file_path">')
-
-        file_format = flags["-f"]
-        file_path = flags["-path"]
-
-        path = Path(file_path).with_suffix(f".{file_format}")
-
-        self.save([record.to_dict() for record in contacts.book.values()], path)
-
-        return "Contact list is saved", False
-
-    @staticmethod
-    def save(data: list[dict], file_path: Path) -> None:
+class JsonFileHandler(BaseFileHandler):
+    def save(self, data: list[dict], file_path: Path) -> None:
         if not data:
             raise ValueError("No data to export")
-
         file_path.parent.mkdir(parents=True, exist_ok=True)
-
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
-    @staticmethod
-    def load(path: Path) -> list[dict]:
-        if not path.exists():
+    def load(self, file_path: Path) -> list[dict]:
+        if not file_path.exists():
             raise ValueError("File does not exist")
         try:
-            with open(path, "r", encoding="utf-8") as file:
+            with open(file_path, "r", encoding="utf-8") as file:
                 return json.load(file)
         except json.JSONDecodeError:
             raise ValueError("Invalid JSON file")
