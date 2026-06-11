@@ -9,6 +9,7 @@ class Note:
     tags: list[str]
     created_at: datetime
     updated_at: datetime
+    embedding: list[float] | None
 
     def __init__(self, id: int, title: str, content: str) -> None:
         self.id = id
@@ -17,6 +18,7 @@ class Note:
         self.tags = []
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
+        self.embedding: list[float] | None = None
 
     def __str__(self) -> str:
         tags_str = f", tags: {', '.join(self.tags)}" if self.tags else ""
@@ -25,6 +27,7 @@ class Note:
     def edit(self, content: str) -> None:
         self.content = content
         self.updated_at = datetime.now()
+        self.embedding = None
 
     def add_tag(self, tag: str) -> None:
         tag = tag.lower().strip()
@@ -48,6 +51,7 @@ class Note:
             "tags": self.tags,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "embedding": self.embedding,
         }
 
     @classmethod
@@ -56,6 +60,7 @@ class Note:
         note.tags = data.get("tags", [])
         note.created_at = datetime.fromisoformat(data["created_at"])
         note.updated_at = datetime.fromisoformat(data["updated_at"])
+        note.embedding = data.get("embedding", None)
         return note
 
 

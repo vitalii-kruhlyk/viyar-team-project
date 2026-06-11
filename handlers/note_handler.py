@@ -1,3 +1,4 @@
+from handlers import ai_handler
 from handlers.decorators import input_error
 from models import NoteBook
 from storage import JsonStorage
@@ -75,6 +76,13 @@ class NoteHandler:
         return "\n".join(str(n) for n in notes), False
 
     @input_error
+    def show_note(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags:
+            raise ValueError("Usage: show --note -i <id>")
+        note = self._get_note_or_raise(flags["-i"])
+        return str(note), False
+
+    @input_error
     def search_note(self, flags: dict[str, str]) -> tuple[str, bool]:
         if "-q" not in flags:
             raise ValueError("Usage: search --note -q <query>")
@@ -91,3 +99,40 @@ class NoteHandler:
         if not results:
             return f"No notes found with tag: {flags['-t']}", False
         return "\n".join(str(n) for n in results), False
+
+    @input_error
+    def ai_tags(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags:
+            raise ValueError("Usage: add --tag -i <id> -ai")
+        note = self._get_note_or_raise(flags["-i"])
+        tags = ai_handler.generate_tags(note.content)
+        for tag in tags:
+            note.add_tag(tag)
+        self._save()
+        return f"AI generated tags for note [{note.id}]: {', '.join(tags)}", False
+
+    @input_error
+    def ai_summary(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-i" not in flags:
+            raise ValueError("Usage: show --note -i <id> -ai")
+        note = self._get_note_or_raise(flags["-i"])
+        summary = ai_handler.generate_summary(note.content)
+        return f"Summary of note [{note.id}]:\n{summary}", False
+
+    @input_error
+    def ai_search(self, flags: dict[str, str]) -> tuple[str, bool]:
+        if "-q" not in flags:
+            raise ValueError("Usage: search --note -q <query> -ai")
+        notes_list = [
+            {"id": n.id, "title": n.title, "content": n.content, "embedding": n.embedding} for n in self.book.all()
+        ]
+        results = ai_handler.semantic_search(flags["-q"], notes_list)
+        for item in notes_list:
+            note = self.book.get(item["id"])
+            if note and note.embedding is None and item.get("embedding"):
+                note.embedding = item["embedding"]
+        self._save()
+        if not results:
+            return f"No notes found for query: {flags['-q']}", False
+        found = [self.book.get(r["id"]) for r in results if self.book.get(r["id"])]
+        return "\n".join(str(n) for n in found), False
